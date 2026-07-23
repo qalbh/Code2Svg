@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2026-07-24',
+    changes: [
+      'Local autosave — your code now persists to this browser, so a refresh no longer wipes your work.',
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-07-24',
     changes: [
