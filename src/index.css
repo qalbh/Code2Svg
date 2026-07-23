@@ -11,6 +11,19 @@
   --info: #34d399;
 }
 
+:root[data-theme='light'] {
+  --bg: #f5f6fa;
+  --panel: #ffffff;
+  --panel-2: #eef0f6;
+  --border: #e1e4ec;
+  --text: #1a1d27;
+  --muted: #666e80;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --error: #dc2626;
+  --info: #059669;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -25,6 +38,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  transition: background 0.15s, color 0.15s;
 }
 
 .app {

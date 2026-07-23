@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: '2026-07-24',
+    changes: [
+      'Light/dark app theme toggle, remembered across visits.',
+    ],
+  },
+  {
     version: '1.1.0',
     date: '2026-07-24',
     changes: [

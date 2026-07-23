@@ -34,8 +34,16 @@ const FORMATS: { id: ImageFormat; label: string }[] = [
 const SCALES = [0.5, 1, 2, 3, 4]
 
 type PreviewBg = 'checker' | 'white' | 'black'
+type AppTheme = 'dark' | 'light'
+
+function getInitialTheme(): AppTheme {
+  const stored = localStorage.getItem('code2svg-theme')
+  if (stored === 'light' || stored === 'dark') return stored
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
 
 export default function App() {
+  const [theme, setTheme] = useState<AppTheme>(getInitialTheme)
   const [code, setCode] = useState(SAMPLE_SVG)
   const [format, setFormat] = useState<ImageFormat>('png')
   const [scale, setScale] = useState(2)
@@ -51,6 +59,11 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('code2svg-theme', theme)
+  }, [theme])
 
   const trimmed = code.trim()
 
@@ -200,6 +213,12 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-actions">
+          <button
+            className="ghost"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          >
+            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+          </button>
           <button className="ghost" onClick={() => setShowChangelog(true)}>What's new</button>
           <button className="ghost" onClick={() => setCode(SAMPLE_SVG)}>Load sample</button>
           <button className="ghost" onClick={() => { setCode(''); setStatus(null) }}>Clear</button>
@@ -251,7 +270,7 @@ export default function App() {
           <CodeMirror
             value={code}
             height="100%"
-            theme={tokyoNight}
+            theme={theme === 'dark' ? tokyoNight : 'light'}
             extensions={[xml()]}
             onChange={setCode}
             className="editor"
