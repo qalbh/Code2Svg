@@ -8,6 +8,7 @@ import {
   renderToBlob,
   type ImageFormat,
 } from './svgToImage'
+import { CHANGELOG } from './changelog'
 
 const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
   <defs>
@@ -48,6 +49,7 @@ export default function App() {
   const [previewBg, setPreviewBg] = useState<PreviewBg>('checker')
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showChangelog, setShowChangelog] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const trimmed = code.trim()
@@ -198,10 +200,37 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-actions">
+          <button className="ghost" onClick={() => setShowChangelog(true)}>What's new</button>
           <button className="ghost" onClick={() => setCode(SAMPLE_SVG)}>Load sample</button>
           <button className="ghost" onClick={() => { setCode(''); setStatus(null) }}>Clear</button>
         </div>
       </header>
+
+      {showChangelog && (
+        <div className="modal-overlay" onClick={() => setShowChangelog(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <span className="pane-title">What's new</span>
+              <button className="ghost" onClick={() => setShowChangelog(false)}>Close</button>
+            </div>
+            <div className="modal-body">
+              {CHANGELOG.map((entry) => (
+                <div className="changelog-entry" key={entry.version}>
+                  <div className="changelog-entry-head">
+                    <strong>v{entry.version}</strong>
+                    <span className="muted">{entry.date}</span>
+                  </div>
+                  <ul>
+                    {entry.changes.map((change) => (
+                      <li key={change}>{change}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="workspace">
         <section className="pane editor-pane">
