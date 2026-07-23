@@ -1,0 +1,309 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { xml } from '@codemirror/lang-xml'
+import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night'
+import {
+  fileExtension,
+  getSvgDimensions,
+  renderToBlob,
+  type ImageFormat,
+} from './svgToImage'
+
+const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="32" fill="url(#g)"/>
+  <circle cx="120" cy="100" r="46" fill="#ffffff" opacity="0.95"/>
+  <path d="M70 170 Q120 130 170 170" stroke="#ffffff" stroke-width="10"
+        fill="none" stroke-linecap="round"/>
+</svg>
+`
+
+const FORMATS: { id: ImageFormat; label: string }[] = [
+  { id: 'png', label: 'PNG' },
+  { id: 'jpeg', label: 'JPG' },
+  { id: 'webp', label: 'WebP' },
+  { id: 'svg', label: 'SVG' },
+]
+
+const SCALES = [0.5, 1, 2, 3, 4]
+
+type PreviewBg = 'checker' | 'white' | 'black'
+
+export default function App() {
+  const [code, setCode] = useState(SAMPLE_SVG)
+  const [format, setFormat] = useState<ImageFormat>('png')
+  const [scale, setScale] = useState(2)
+  const [quality, setQuality] = useState(0.92)
+  const [useBackground, setUseBackground] = useState(false)
+  const [background, setBackground] = useState('#ffffff')
+  const [previewBg, setPreviewBg] = useState<PreviewBg>('checker')
+  const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const trimmed = code.trim()
+
+  const dimensions = useMemo(() => {
+    if (!trimmed) return null
+    try {
+      return getSvgDimensions(trimmed)
+    } catch {
+      return null
+    }
+  }, [trimmed])
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!trimmed) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(new Blob([trimmed], { type: 'image/svg+xml' }))
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [trimmed])
+
+  const supportsQuality = format === 'jpeg' || format === 'webp'
+
+  const download = useCallback(async () => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    setBusy(true)
+    setStatus(null)
+    try {
+      const blob = await renderToBlob(trimmed, {
+        format,
+        scale,
+        quality,
+        background: format === 'svg' ? null : useBackground ? background : null,
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `code2svg.${fileExtension(format)}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      setStatus({ kind: 'info', text: `Downloaded as ${fileExtension(format).toUpperCase()}.` })
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
+    } finally {
+      setBusy(false)
+    }
+  }, [trimmed, format, scale, quality, useBackground, background])
+
+  const copyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setStatus({ kind: 'info', text: 'SVG code copied to clipboard.' })
+    } catch {
+      setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
+    }
+  }, [code])
+
+  const onUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCode(String(reader.result ?? ''))
+      setStatus({ kind: 'info', text: `Loaded ${file.name}.` })
+    }
+    reader.onerror = () => setStatus({ kind: 'error', text: 'Could not read the file.' })
+    reader.readAsText(file)
+    e.target.value = ''
+  }, [])
+
+  const outputSize = dimensions
+    ? format === 'svg'
+      ? `${Math.round(dimensions.width)} × ${Math.round(dimensions.height)}`
+      : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
+    : '—'
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <span className="logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="26" height="26">
+              <rect width="32" height="32" rx="7" fill="#6366f1" />
+              <path d="M11 9 L6 16 L11 23" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M21 9 L26 16 L21 23" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="18" y1="7" x2="14" y2="25" stroke="#a5b4fc" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          </span>
+          <div>
+            <h1>Code2Svg</h1>
+            <p>SVG to image converter</p>
+          </div>
+        </div>
+        <div className="topbar-actions">
+          <button className="ghost" onClick={() => setCode(SAMPLE_SVG)}>Load sample</button>
+          <button className="ghost" onClick={() => { setCode(''); setStatus(null) }}>Clear</button>
+        </div>
+      </header>
+
+      <main className="workspace">
+        <section className="pane editor-pane">
+          <div className="pane-head">
+            <span className="pane-title">SVG code</span>
+            <div className="pane-tools">
+              <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
+              <button className="ghost" onClick={copyCode}>Copy</button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".svg,image/svg+xml"
+                hidden
+                onChange={onUpload}
+              />
+            </div>
+          </div>
+          <CodeMirror
+            value={code}
+            height="100%"
+            theme={tokyoNight}
+            extensions={[xml()]}
+            onChange={setCode}
+            className="editor"
+            basicSetup={{ lineNumbers: true, foldGutter: true }}
+          />
+        </section>
+
+        <section className="pane preview-pane">
+          <div className="pane-head">
+            <span className="pane-title">Preview</span>
+            <div className="seg">
+              {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
+                <button
+                  key={bg}
+                  className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
+                  onClick={() => setPreviewBg(bg)}
+                >
+                  {bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={`preview-canvas bg-${previewBg}`}>
+            {previewUrl ? (
+              <img src={previewUrl} alt="SVG preview" />
+            ) : (
+              <p className="empty">Your SVG preview will appear here.</p>
+            )}
+          </div>
+        </section>
+
+        <aside className="pane controls-pane">
+          <div className="pane-head">
+            <span className="pane-title">Export</span>
+          </div>
+          <div className="controls">
+            <div className="field">
+              <label>Format</label>
+              <div className="seg wide">
+                {FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    className={format === f.id ? 'seg-btn active' : 'seg-btn'}
+                    onClick={() => setFormat(f.id)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {format !== 'svg' && (
+              <div className="field">
+                <label>Scale</label>
+                <div className="seg wide">
+                  {SCALES.map((s) => (
+                    <button
+                      key={s}
+                      className={scale === s ? 'seg-btn active' : 'seg-btn'}
+                      onClick={() => setScale(s)}
+                    >
+                      {s}×
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {supportsQuality && (
+              <div className="field">
+                <label>Quality <span className="muted">{Math.round(quality * 100)}%</span></label>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={1}
+                  step={0.01}
+                  value={quality}
+                  onChange={(e) => setQuality(Number(e.target.value))}
+                />
+              </div>
+            )}
+
+            {format !== 'svg' && (
+              <div className="field">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={useBackground}
+                    onChange={(e) => setUseBackground(e.target.checked)}
+                  />
+                  Background color
+                </label>
+                {useBackground && (
+                  <div className="color-row">
+                    <input
+                      type="color"
+                      value={background}
+                      onChange={(e) => setBackground(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      value={background}
+                      onChange={(e) => setBackground(e.target.value)}
+                      spellCheck={false}
+                    />
+                  </div>
+                )}
+                {format === 'jpeg' && !useBackground && (
+                  <p className="hint">JPG has no transparency — a white background is applied.</p>
+                )}
+              </div>
+            )}
+
+            <div className="summary">
+              <div><span>Output size</span><strong>{outputSize}</strong></div>
+              <div><span>Format</span><strong>{fileExtension(format).toUpperCase()}</strong></div>
+            </div>
+
+            <button className="primary" onClick={download} disabled={busy || !trimmed}>
+              {busy ? 'Rendering…' : `Download ${fileExtension(format).toUpperCase()}`}
+            </button>
+
+            {status && (
+              <p className={status.kind === 'error' ? 'msg error' : 'msg info'}>{status.text}</p>
+            )}
+          </div>
+        </aside>
+      </main>
+
+      <footer className="footer">
+        <span>Runs entirely in your browser — nothing is uploaded.</span>
+      </footer>
+    </div>
+  )
+}
