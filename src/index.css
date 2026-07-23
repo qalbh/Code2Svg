@@ -294,6 +294,52 @@ input[type='range'] {
   accent-color: var(--accent);
 }
 
+.ghost.wide {
+  width: 100%;
+  padding: 10px 16px;
+  text-align: center;
+}
+
+.dimension-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dimension-row input[type='number'] {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.dimension-row input[type='number']:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.lock-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lock-btn.active {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .color-row {
   display: flex;
   gap: 8px;

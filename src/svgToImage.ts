@@ -3,6 +3,8 @@ export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'svg'
 export interface RenderOptions {
   format: ImageFormat
   scale: number
+  width?: number | null
+  height?: number | null
   background: string | null
   quality: number
 }
@@ -73,8 +75,8 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
   }
 
   const { width, height } = intrinsicSize(svg)
-  const targetWidth = Math.max(1, Math.round(width * options.scale))
-  const targetHeight = Math.max(1, Math.round(height * options.scale))
+  const targetWidth = Math.max(1, Math.round(options.width ?? width * options.scale))
+  const targetHeight = Math.max(1, Math.round(options.height ?? height * options.scale))
 
   const image = new Image()
   image.crossOrigin = 'anonymous'

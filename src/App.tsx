@@ -38,6 +38,10 @@ export default function App() {
   const [code, setCode] = useState(SAMPLE_SVG)
   const [format, setFormat] = useState<ImageFormat>('png')
   const [scale, setScale] = useState(2)
+  const [sizeMode, setSizeMode] = useState<'scale' | 'custom'>('scale')
+  const [customWidth, setCustomWidth] = useState(512)
+  const [customHeight, setCustomHeight] = useState(512)
+  const [lockAspect, setLockAspect] = useState(true)
   const [quality, setQuality] = useState(0.92)
   const [useBackground, setUseBackground] = useState(false)
   const [background, setBackground] = useState('#ffffff')
@@ -82,6 +86,8 @@ export default function App() {
       const blob = await renderToBlob(trimmed, {
         format,
         scale,
+        width: sizeMode === 'custom' ? customWidth : null,
+        height: sizeMode === 'custom' ? customHeight : null,
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
       })
@@ -99,7 +105,50 @@ export default function App() {
     } finally {
       setBusy(false)
     }
-  }, [trimmed, format, scale, quality, useBackground, background])
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background])
+
+  const copyImage = useCallback(async () => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+      setStatus({ kind: 'error', text: 'Clipboard image copy is not supported in this browser.' })
+      return
+    }
+    setBusy(true)
+    setStatus(null)
+    try {
+      const blob = await renderToBlob(trimmed, {
+        format: 'png',
+        scale,
+        width: sizeMode === 'custom' ? customWidth : null,
+        height: sizeMode === 'custom' ? customHeight : null,
+        quality,
+        background: useBackground ? background : null,
+      })
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+      setStatus({ kind: 'info', text: 'Image copied to clipboard as PNG.' })
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not copy the image.' })
+    } finally {
+      setBusy(false)
+    }
+  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background])
+
+  const handleWidthChange = useCallback((value: number) => {
+    setCustomWidth(value)
+    if (lockAspect && dimensions) {
+      setCustomHeight(Math.max(1, Math.round(value / (dimensions.width / dimensions.height))))
+    }
+  }, [lockAspect, dimensions])
+
+  const handleHeightChange = useCallback((value: number) => {
+    setCustomHeight(value)
+    if (lockAspect && dimensions) {
+      setCustomWidth(Math.max(1, Math.round(value * (dimensions.width / dimensions.height))))
+    }
+  }, [lockAspect, dimensions])
 
   const copyCode = useCallback(async () => {
     try {
@@ -126,7 +175,9 @@ export default function App() {
   const outputSize = dimensions
     ? format === 'svg'
       ? `${Math.round(dimensions.width)} × ${Math.round(dimensions.height)}`
-      : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
+      : sizeMode === 'custom'
+        ? `${Math.round(customWidth)} × ${Math.round(customHeight)} px`
+        : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
     : '—'
 
   return (
@@ -225,18 +276,64 @@ export default function App() {
 
             {format !== 'svg' && (
               <div className="field">
-                <label>Scale</label>
+                <label>Size</label>
                 <div className="seg wide">
-                  {SCALES.map((s) => (
-                    <button
-                      key={s}
-                      className={scale === s ? 'seg-btn active' : 'seg-btn'}
-                      onClick={() => setScale(s)}
-                    >
-                      {s}×
-                    </button>
-                  ))}
+                  <button
+                    className={sizeMode === 'scale' ? 'seg-btn active' : 'seg-btn'}
+                    onClick={() => setSizeMode('scale')}
+                  >
+                    Scale
+                  </button>
+                  <button
+                    className={sizeMode === 'custom' ? 'seg-btn active' : 'seg-btn'}
+                    onClick={() => {
+                      setSizeMode('custom')
+                      if (dimensions) {
+                        setCustomWidth(Math.round(dimensions.width))
+                        setCustomHeight(Math.round(dimensions.height))
+                      }
+                    }}
+                  >
+                    Custom
+                  </button>
                 </div>
+
+                {sizeMode === 'scale' ? (
+                  <div className="seg wide">
+                    {SCALES.map((s) => (
+                      <button
+                        key={s}
+                        className={scale === s ? 'seg-btn active' : 'seg-btn'}
+                        onClick={() => setScale(s)}
+                      >
+                        {s}×
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="dimension-row">
+                    <input
+                      type="number"
+                      min={1}
+                      value={customWidth}
+                      onChange={(e) => handleWidthChange(Number(e.target.value))}
+                    />
+                    <button
+                      type="button"
+                      className={lockAspect ? 'lock-btn active' : 'lock-btn'}
+                      onClick={() => setLockAspect((v) => !v)}
+                      title={lockAspect ? 'Aspect ratio locked' : 'Aspect ratio unlocked'}
+                    >
+                      {lockAspect ? '🔒' : '🔓'}
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={customHeight}
+                      onChange={(e) => handleHeightChange(Number(e.target.value))}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -292,6 +389,10 @@ export default function App() {
 
             <button className="primary" onClick={download} disabled={busy || !trimmed}>
               {busy ? 'Rendering…' : `Download ${fileExtension(format).toUpperCase()}`}
+            </button>
+
+            <button className="ghost wide" onClick={copyImage} disabled={busy || !trimmed}>
+              Copy image (PNG)
             </button>
 
             {status && (
