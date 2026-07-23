@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { xml } from '@codemirror/lang-xml'
+import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
 import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night'
 import {
   fileExtension,
+  findXmlError,
   getSvgDimensions,
   renderToBlob,
   type ImageFormat,
@@ -32,6 +34,25 @@ const FORMATS: { id: ImageFormat; label: string }[] = [
 ]
 
 const SCALES = [0.5, 1, 2, 3, 4]
+
+const xmlLinter = linter((view): Diagnostic[] => {
+  const error = findXmlError(view.state.doc.toString())
+  if (!error) return []
+
+  const lineNumber = Math.min(Math.max(error.line, 1), view.state.doc.lines)
+  const line = view.state.doc.line(lineNumber)
+  const from = Math.min(line.from + Math.max(error.column - 1, 0), line.to)
+  const to = Math.max(from + 1, line.to)
+
+  return [
+    {
+      from,
+      to: Math.min(to, view.state.doc.length),
+      severity: 'error',
+      message: error.message,
+    },
+  ]
+})
 
 type PreviewBg = 'checker' | 'white' | 'black'
 type AppTheme = 'dark' | 'light'
@@ -319,7 +340,7 @@ export default function App() {
             value={code}
             height="100%"
             theme={theme === 'dark' ? tokyoNight : 'light'}
-            extensions={[xml()]}
+            extensions={[xml(), xmlLinter, lintGutter()]}
             onChange={setCode}
             className="editor"
             basicSetup={{ lineNumbers: true, foldGutter: true }}

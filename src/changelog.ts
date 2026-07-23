@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '2026-07-24',
+    changes: [
+      'Invalid XML is now highlighted inline in the editor as you type, with a gutter marker and hover tooltip explaining the error.',
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-07-24',
     changes: [

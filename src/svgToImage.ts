@@ -25,6 +25,55 @@ export function fileExtension(format: ImageFormat): string {
   return format === 'jpeg' ? 'jpg' : format
 }
 
+export interface XmlError {
+  message: string
+  line: number
+  column: number
+}
+
+const FALLBACK_MESSAGE = 'The SVG code is not valid XML.'
+
+// Chrome/Safari (WebKit): "...error on line 2 at column 3: error parsing attribute name..."
+const WEBKIT_PATTERN = /error\s+on\s+line\s+(\d+)\s+at\s+column\s+(\d+)\s*:\s*([\s\S]*?)(?:Below is a rendering|This page contains|$)/i
+
+// Firefox: "XML Parsing Error: <description>\nLocation: ...\nLine Number 2, Column 5:"
+const FIREFOX_PATTERN = /^([\s\S]*?)Location:[\s\S]*?Line Number\s*(\d+),\s*Column\s*(\d+)/i
+
+export function findXmlError(code: string): XmlError | null {
+  if (!code.trim()) return null
+  const doc = new DOMParser().parseFromString(code, 'image/svg+xml')
+  const errorNode = doc.querySelector('parsererror')
+  if (!errorNode) return null
+
+  const text = errorNode.textContent ?? FALLBACK_MESSAGE
+
+  const webkit = text.match(WEBKIT_PATTERN)
+  if (webkit) {
+    return {
+      message: webkit[3].trim() || FALLBACK_MESSAGE,
+      line: Number(webkit[1]),
+      column: Number(webkit[2]),
+    }
+  }
+
+  const firefox = text.match(FIREFOX_PATTERN)
+  if (firefox) {
+    return {
+      message: firefox[1].replace(/^XML Parsing Error:\s*/i, '').trim() || FALLBACK_MESSAGE,
+      line: Number(firefox[2]),
+      column: Number(firefox[3]),
+    }
+  }
+
+  const generic = text.match(/line\D*?(\d+)[^\d]*column\D*?(\d+)/i)
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean)
+  return {
+    message: lines[0] || FALLBACK_MESSAGE,
+    line: generic ? Number(generic[1]) : 1,
+    column: generic ? Number(generic[2]) : 1,
+  }
+}
+
 function parseSvg(code: string): SVGSVGElement {
   const doc = new DOMParser().parseFromString(code, 'image/svg+xml')
   const parseError = doc.querySelector('parsererror')
