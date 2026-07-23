@@ -435,6 +435,28 @@ input[type='range'] {
   background: rgba(52, 211, 153, 0.1);
 }
 
+/* Drag-and-drop overlay */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.12);
+  pointer-events: none;
+}
+
+.drop-overlay-inner {
+  padding: 28px 44px;
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 /* Changelog modal */
 .modal-overlay {
   position: fixed;

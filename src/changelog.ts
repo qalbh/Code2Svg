@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-07-24',
+    changes: [
+      'Drag and drop an .svg file anywhere on the page to load it.',
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-07-24',
     changes: [

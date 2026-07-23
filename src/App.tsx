@@ -58,7 +58,9 @@ export default function App() {
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragCounter = useRef(0)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -174,9 +176,7 @@ export default function App() {
     }
   }, [code])
 
-  const onUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const loadFile = useCallback((file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
       setCode(String(reader.result ?? ''))
@@ -184,8 +184,44 @@ export default function App() {
     }
     reader.onerror = () => setStatus({ kind: 'error', text: 'Could not read the file.' })
     reader.readAsText(file)
-    e.target.value = ''
   }, [])
+
+  const onUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    loadFile(file)
+    e.target.value = ''
+  }, [loadFile])
+
+  const onDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.dataTransfer.types.includes('Files')) return
+    dragCounter.current += 1
+    setIsDragging(true)
+  }, [])
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+  }, [])
+
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current = Math.max(0, dragCounter.current - 1)
+    if (dragCounter.current === 0) setIsDragging(false)
+  }, [])
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current = 0
+    setIsDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (!file) return
+    if (!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
+      setStatus({ kind: 'error', text: 'Drop an .svg file to load it.' })
+      return
+    }
+    loadFile(file)
+  }, [loadFile])
 
   const outputSize = dimensions
     ? format === 'svg'
@@ -196,7 +232,19 @@ export default function App() {
     : '—'
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {isDragging && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-inner">Drop your .svg file to load it</div>
+        </div>
+      )}
+
       <header className="topbar">
         <div className="brand">
           <span className="logo" aria-hidden="true">
