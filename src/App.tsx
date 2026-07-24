@@ -84,20 +84,37 @@ interface ColorSwatchProps {
 
 function ColorSwatch({ value, hex, onCommit }: ColorSwatchProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  // Mirror the latest props in refs so the listener below (attached once) never
+  // reads stale values, without needing to reattach it — reattaching on every
+  // color tick would fight the native picker the same way a remount would.
+  const valueRef = useRef(value)
+  const onCommitRef = useRef(onCommit)
+  useEffect(() => {
+    valueRef.current = value
+    onCommitRef.current = onCommit
+  })
 
   useEffect(() => {
     const el = inputRef.current
     if (!el) return
-    // Native 'change' fires once, when the picker is dismissed — unlike React's
-    // onChange (mapped to the native 'input' event), which fires continuously
-    // while dragging and would remount this input mid-interaction, closing the
-    // picker every time the color (and therefore this swatch's key) updates.
-    const handleChange = (e: Event) => {
-      onCommit(value, (e.target as HTMLInputElement).value)
+    // 'input' fires continuously while dragging inside the native picker, giving
+    // a live preview; 'change' fires once more on dismissal as a safety net.
+    // The input stays uncontrolled (defaultValue) and this listener is attached
+    // once — never remounted or rebound — so nothing external touches the
+    // element's own value while the native picker is open, which is what was
+    // closing it prematurely before.
+    const handleInput = (e: Event) => {
+      const newValue = (e.target as HTMLInputElement).value
+      onCommitRef.current(valueRef.current, newValue)
+      valueRef.current = newValue
     }
-    el.addEventListener('change', handleChange)
-    return () => el.removeEventListener('change', handleChange)
-  }, [value, onCommit])
+    el.addEventListener('input', handleInput)
+    el.addEventListener('change', handleInput)
+    return () => {
+      el.removeEventListener('input', handleInput)
+      el.removeEventListener('change', handleInput)
+    }
+  }, [])
 
   return (
     <label className="swatch-chip" title={value}>
@@ -445,8 +462,11 @@ export default function App() {
           </div>
           {colorSwatches.length > 0 && (
             <div className="color-swatch-bar">
-              {colorSwatches.map(({ value, hex }) => (
-                <ColorSwatch key={value} value={value} hex={hex} onCommit={updateColor} />
+              {colorSwatches.map(({ value, hex }, index) => (
+                // Keyed by position, not value: the value changes continuously
+                // during a live drag, and keying on it would remount the input
+                // (and close the native picker) on every tick.
+                <ColorSwatch key={index} value={value} hex={hex} onCommit={updateColor} />
               ))}
             </div>
           )}

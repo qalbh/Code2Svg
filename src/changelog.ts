@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.3',
+    date: '2026-07-24',
+    changes: [
+      'Recolor swatches now update the preview live while dragging in the color picker, instead of only on close.',
+    ],
+  },
+  {
     version: '1.7.2',
     date: '2026-07-24',
     changes: [
