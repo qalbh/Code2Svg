@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.2',
+    date: '2026-07-24',
+    changes: [
+      'Fixed the recolor swatch picker closing immediately on click — it now stays open while dragging and only commits when you finish picking a color.',
+    ],
+  },
+  {
     version: '1.7.1',
     date: '2026-07-24',
     changes: [

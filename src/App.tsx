@@ -76,6 +76,37 @@ function getInitialCode(): string {
   }
 }
 
+interface ColorSwatchProps {
+  value: string
+  hex: string
+  onCommit: (oldColor: string, newColor: string) => void
+}
+
+function ColorSwatch({ value, hex, onCommit }: ColorSwatchProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    // Native 'change' fires once, when the picker is dismissed — unlike React's
+    // onChange (mapped to the native 'input' event), which fires continuously
+    // while dragging and would remount this input mid-interaction, closing the
+    // picker every time the color (and therefore this swatch's key) updates.
+    const handleChange = (e: Event) => {
+      onCommit(value, (e.target as HTMLInputElement).value)
+    }
+    el.addEventListener('change', handleChange)
+    return () => el.removeEventListener('change', handleChange)
+  }, [value, onCommit])
+
+  return (
+    <label className="swatch-chip" title={value}>
+      <input ref={inputRef} type="color" defaultValue={hex} />
+      <span>{value}</span>
+    </label>
+  )
+}
+
 export default function App() {
   const [theme, setTheme] = useState<AppTheme>(getInitialTheme)
   const [code, setCode] = useState(getInitialCode)
@@ -415,14 +446,7 @@ export default function App() {
           {colorSwatches.length > 0 && (
             <div className="color-swatch-bar">
               {colorSwatches.map(({ value, hex }) => (
-                <label className="swatch-chip" key={value} title={value}>
-                  <input
-                    type="color"
-                    value={hex}
-                    onChange={(e) => updateColor(value, e.target.value)}
-                  />
-                  <span>{value}</span>
-                </label>
+                <ColorSwatch key={value} value={value} hex={hex} onCommit={updateColor} />
               ))}
             </div>
           )}
