@@ -1,14 +1,16 @@
 import { defineConfig } from 'vite'
-import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
+      // Multi-page: two real HTML entries. Relative paths resolve from the
+      // project root — no node:path/__dirname, so vite.config.ts type-checks
+      // without @types/node (which the project doesn't depend on).
       input: {
-        main: resolve(__dirname, 'index.html'),
-        imageToSvg: resolve(__dirname, 'image-to-svg.html'),
+        main: 'index.html',
+        imageToSvg: 'image-to-svg.html',
       },
     },
   },
