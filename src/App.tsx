@@ -15,6 +15,7 @@ import {
   replaceColor,
   type ImageFormat,
 } from './svgToImage'
+import { hasAnimation, renderToGif } from './svgToGif'
 import { CHANGELOG } from './changelog'
 
 const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
@@ -144,6 +145,9 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [gifDuration, setGifDuration] = useState(2)
+  const [gifFps, setGifFps] = useState(20)
+  const [gifProgress, setGifProgress] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
@@ -192,6 +196,8 @@ export default function App() {
   const updateColor = useCallback((oldColor: string, newColor: string) => {
     setCode((prev) => replaceColor(prev, oldColor, newColor))
   }, [])
+
+  const isAnimated = useMemo(() => hasAnimation(trimmed), [trimmed])
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -310,6 +316,39 @@ export default function App() {
       setBusy(false)
     }
   }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
+
+  const downloadGif = useCallback(async () => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    setBusy(true)
+    setStatus(null)
+    setGifProgress(0)
+    try {
+      const blob = await renderToGif(trimmed, {
+        scale,
+        duration: gifDuration,
+        fps: gifFps,
+        background: useBackground ? background : null,
+        onProgress: (fraction) => setGifProgress(fraction),
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'code2svg.gif'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      setStatus({ kind: 'info', text: `Downloaded animated GIF (${formatFileSize(blob.size)}).` })
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not create the GIF.' })
+    } finally {
+      setBusy(false)
+      setGifProgress(null)
+    }
+  }, [trimmed, scale, gifDuration, gifFps, useBackground, background])
 
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null)
 
@@ -775,6 +814,46 @@ export default function App() {
             <button className="ghost wide" onClick={copyImage} disabled={busy || !trimmed}>
               Copy image (PNG)
             </button>
+
+            {isAnimated && (
+              <div className="animated-export">
+                <div className="animated-export-head">
+                  <span className="pane-title">Animated export</span>
+                  <span className="badge">GIF</span>
+                </div>
+                <p className="hint">This SVG is animated — export the motion as a GIF.</p>
+                <div className="field">
+                  <label>Duration <span className="muted">{gifDuration}s</span></label>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={10}
+                    step={0.5}
+                    value={gifDuration}
+                    onChange={(e) => setGifDuration(Number(e.target.value))}
+                  />
+                </div>
+                <div className="field">
+                  <label>Frame rate <span className="muted">{gifFps} fps</span></label>
+                  <input
+                    type="range"
+                    min={5}
+                    max={30}
+                    step={1}
+                    value={gifFps}
+                    onChange={(e) => setGifFps(Number(e.target.value))}
+                  />
+                </div>
+                {gifProgress !== null && (
+                  <div className="progress">
+                    <div className="progress-bar" style={{ width: `${Math.round(gifProgress * 100)}%` }} />
+                  </div>
+                )}
+                <button className="primary" onClick={downloadGif} disabled={busy || !trimmed}>
+                  {gifProgress !== null ? `Recording… ${Math.round(gifProgress * 100)}%` : 'Download GIF'}
+                </button>
+              </div>
+            )}
 
             {status && (
               <p className={status.kind === 'error' ? 'msg error' : 'msg info'}>{status.text}</p>

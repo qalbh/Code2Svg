@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.12.0',
+    date: '2026-07-24',
+    changes: [
+      'Animated SVG → GIF export — animated SVGs (SMIL or CSS) now reveal an "Animated export" panel to record the motion as a downloadable GIF, with adjustable duration and frame rate.',
+    ],
+  },
+  {
     version: '1.11.0',
     date: '2026-07-24',
     changes: [
