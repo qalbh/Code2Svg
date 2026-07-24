@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.0',
+    date: '2026-07-24',
+    changes: [
+      'Removed local autosave — the editor no longer persists your code to the browser between sessions.',
+    ],
+  },
+  {
     version: '1.13.0',
     date: '2026-07-24',
     changes: [
@@ -87,13 +94,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-07-24',
     changes: [
       'Trim transparent edges — crop PNG/JPG/WebP exports to the visible content, removing empty padding.',
-    ],
-  },
-  {
-    version: '1.5.0',
-    date: '2026-07-24',
-    changes: [
-      'Local autosave — your code now persists to this browser, so a refresh no longer wipes your work.',
     ],
   },
   {

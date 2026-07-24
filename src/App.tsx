@@ -69,16 +69,6 @@ function getInitialTheme(): AppTheme {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
 
-const AUTOSAVE_KEY = 'code2svg-autosave'
-
-function getInitialCode(): string {
-  try {
-    return localStorage.getItem(AUTOSAVE_KEY) ?? SAMPLE_SVG
-  } catch {
-    return SAMPLE_SVG
-  }
-}
-
 interface ColorSwatchProps {
   value: string
   hex: string
@@ -129,7 +119,7 @@ function ColorSwatch({ value, hex, onCommit }: ColorSwatchProps) {
 
 export default function App() {
   const [theme, setTheme] = useState<AppTheme>(getInitialTheme)
-  const [code, setCode] = useState(getInitialCode)
+  const [code, setCode] = useState(SAMPLE_SVG)
   const [format, setFormat] = useState<ImageFormat>('png')
   const [scale, setScale] = useState(2)
   const [sizeMode, setSizeMode] = useState<'scale' | 'custom'>('scale')
@@ -155,25 +145,6 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('code2svg-theme', theme)
   }, [theme])
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      try {
-        localStorage.setItem(AUTOSAVE_KEY, code)
-      } catch {
-        // storage unavailable (private browsing, quota) — nothing to do
-      }
-    }, 400)
-    return () => clearTimeout(id)
-  }, [code])
-
-  useEffect(() => {
-    if (code !== SAMPLE_SVG) {
-      setStatus({ kind: 'info', text: 'Restored your last session from this browser.' })
-    }
-    // Only check the initial value, once, on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const trimmed = code.trim()
 
