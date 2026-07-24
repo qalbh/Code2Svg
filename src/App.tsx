@@ -7,6 +7,7 @@ import {
   fileExtension,
   findColors,
   findXmlError,
+  formatFileSize,
   getSvgDimensions,
   normalizeColorToHex,
   prettifySvg,
@@ -307,6 +308,37 @@ export default function App() {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
     } finally {
       setBusy(false)
+    }
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
+
+  const [estimatedSize, setEstimatedSize] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!trimmed) {
+      setEstimatedSize(null)
+      return
+    }
+    let cancelled = false
+    const id = setTimeout(() => {
+      renderToBlob(trimmed, {
+        format,
+        scale,
+        width: sizeMode === 'custom' ? customWidth : null,
+        height: sizeMode === 'custom' ? customHeight : null,
+        quality,
+        background: format === 'svg' ? null : useBackground ? background : null,
+        trim: format !== 'svg' && trimTransparent,
+      })
+        .then(({ blob }) => {
+          if (!cancelled) setEstimatedSize(blob.size)
+        })
+        .catch(() => {
+          if (!cancelled) setEstimatedSize(null)
+        })
+    }, 400)
+    return () => {
+      cancelled = true
+      clearTimeout(id)
     }
   }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
 
@@ -730,6 +762,10 @@ export default function App() {
             <div className="summary">
               <div><span>Output size</span><strong>{outputSize}</strong></div>
               <div><span>Format</span><strong>{fileExtension(format).toUpperCase()}</strong></div>
+              <div>
+                <span>Estimated file size</span>
+                <strong>{estimatedSize === null ? '—' : formatFileSize(estimatedSize)}</strong>
+              </div>
             </div>
 
             <button className="primary" onClick={download} disabled={busy || !trimmed}>

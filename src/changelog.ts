@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.0',
+    date: '2026-07-24',
+    changes: [
+      'Estimated file size now shows in the Export panel, updating live as you change format, scale, quality, or trim settings.',
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-07-24',
     changes: [

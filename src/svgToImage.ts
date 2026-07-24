@@ -32,6 +32,12 @@ export function fileExtension(format: ImageFormat): string {
   return format === 'jpeg' ? 'jpg' : format
 }
 
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
 export interface XmlError {
   message: string
   line: number
