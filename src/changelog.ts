@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.17.0',
+    date: '2026-07-24',
+    changes: [
+      'New Optimize button — minify SVGs with SVGO, with a byte-savings readout and a settings popover to toggle individual plugins (viewBox removal stays off by default) and pretty-print the output. Runs alongside the existing non-destructive Format button.',
+    ],
+  },
+  {
     version: '1.16.0',
     date: '2026-07-24',
     changes: [

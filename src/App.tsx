@@ -18,6 +18,7 @@ import {
 } from './svgToImage'
 import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
+import { DEFAULT_OPTIMIZE_OPTIONS, PLUGIN_GROUPS, optimizeSvg, type OptimizeOptions } from './optimizeSvg'
 import { CHANGELOG } from './changelog'
 
 const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
@@ -86,6 +87,8 @@ const ICON_PATHS: Record<string, string> = {
   resetTransform: 'M9 14L4 9l5-5 M4 9h11a4 4 0 0 1 0 8h-1',
   palette:
     'M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 2.45-3 2.5 2.5 0 0 1 2.45-3H20a2 2 0 0 0 2-2 9 9 0 0 0-10-8z M7.5 10.5h.01 M12 7.5h.01 M16.5 10.5h.01',
+  settings:
+    'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37c1 .608 2.296.07 2.572-1.065z M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0',
 }
 
 function Icon({ name }: { name: string }) {
@@ -112,6 +115,22 @@ function getInitialTheme(): AppTheme {
   const stored = localStorage.getItem('code2svg-theme')
   if (stored === 'light' || stored === 'dark') return stored
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
+const OPTIMIZE_OPTIONS_KEY = 'code2svg-optimize-options'
+
+function getInitialOptimizeOptions(): OptimizeOptions {
+  try {
+    const stored = localStorage.getItem(OPTIMIZE_OPTIONS_KEY)
+    if (!stored) return DEFAULT_OPTIMIZE_OPTIONS
+    const parsed = JSON.parse(stored)
+    return {
+      prettify: typeof parsed.prettify === 'boolean' ? parsed.prettify : DEFAULT_OPTIMIZE_OPTIONS.prettify,
+      plugins: { ...DEFAULT_OPTIMIZE_OPTIONS.plugins, ...parsed.plugins },
+    }
+  } catch {
+    return DEFAULT_OPTIMIZE_OPTIONS
+  }
 }
 
 interface ColorSwatchProps {
@@ -183,6 +202,9 @@ export default function App() {
   const [gifDuration, setGifDuration] = useState(2)
   const [gifFps, setGifFps] = useState(20)
   const [gifProgress, setGifProgress] = useState<number | null>(null)
+  const [optimizeOptions, setOptimizeOptions] = useState<OptimizeOptions>(getInitialOptimizeOptions)
+  const [showOptimizeSettings, setShowOptimizeSettings] = useState(false)
+  const [optimizeResult, setOptimizeResult] = useState<{ originalBytes: number; optimizedBytes: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
@@ -190,6 +212,10 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('code2svg-theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem(OPTIMIZE_OPTIONS_KEY, JSON.stringify(optimizeOptions))
+  }, [optimizeOptions])
 
   const trimmed = code.trim()
 
@@ -617,6 +643,39 @@ export default function App() {
     }
   }, [trimmed])
 
+  const runOptimize = useCallback(() => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    try {
+      const result = optimizeSvg(trimmed, optimizeOptions)
+      setCode(result.data)
+      setOptimizeResult({ originalBytes: result.originalBytes, optimizedBytes: result.optimizedBytes })
+      setStatus({ kind: 'info', text: 'Optimized the SVG code.' })
+    } catch (err) {
+      setOptimizeResult(null)
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not optimize the SVG.' })
+    }
+  }, [trimmed, optimizeOptions])
+
+  const togglePlugin = useCallback((key: string, enabled: boolean) => {
+    setOptimizeOptions((prev) => ({ ...prev, plugins: { ...prev.plugins, [key]: enabled } }))
+  }, [])
+
+  const optimizeReadout = useMemo(() => {
+    if (!optimizeResult) return null
+    const { originalBytes, optimizedBytes } = optimizeResult
+    if (optimizedBytes >= originalBytes) {
+      return { text: 'Already optimized.', shrank: false }
+    }
+    const pct = Math.round((1 - optimizedBytes / originalBytes) * 100)
+    return {
+      text: `${formatFileSize(originalBytes)} → ${formatFileSize(optimizedBytes)} (−${pct}%)`,
+      shrank: true,
+    }
+  }, [optimizeResult])
+
   const loadFile = useCallback((file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -758,6 +817,50 @@ export default function App() {
             <span className="pane-title">SVG code</span>
             <div className="pane-tools">
               <button className="ghost" onClick={formatCode}>Format</button>
+              <div className="optimize-group">
+                <button className="ghost" onClick={runOptimize}>Optimize</button>
+                <button
+                  className={showOptimizeSettings ? 'icon-btn active' : 'icon-btn'}
+                  onClick={() => setShowOptimizeSettings((v) => !v)}
+                  title="Optimize settings"
+                >
+                  <Icon name="settings" />
+                </button>
+                {showOptimizeSettings && (
+                  <>
+                    <div className="popover-backdrop" onClick={() => setShowOptimizeSettings(false)} />
+                    <div className="optimize-popover">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={optimizeOptions.prettify}
+                          onChange={(e) =>
+                            setOptimizeOptions((prev) => ({ ...prev, prettify: e.target.checked }))
+                          }
+                        />
+                        Prettify output
+                      </label>
+                      <div className="optimize-plugin-groups">
+                        {PLUGIN_GROUPS.map((group) => (
+                          <div className="optimize-plugin-group" key={group.title}>
+                            <span className="optimize-group-title">{group.title}</span>
+                            {group.plugins.map((p) => (
+                              <label className="checkbox" key={p.key} title={p.hint}>
+                                <input
+                                  type="checkbox"
+                                  checked={optimizeOptions.plugins[p.key] ?? false}
+                                  onChange={(e) => togglePlugin(p.key, e.target.checked)}
+                                />
+                                {p.label}
+                              </label>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
               <button className="ghost" onClick={copyCode}>Copy</button>
               <input
@@ -769,6 +872,11 @@ export default function App() {
               />
             </div>
           </div>
+          {optimizeReadout && (
+            <div className={optimizeReadout.shrank ? 'optimize-readout shrank' : 'optimize-readout'}>
+              {optimizeReadout.text}
+            </div>
+          )}
           <CodeMirror
             value={code}
             height="100%"

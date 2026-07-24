@@ -1,7 +1,7 @@
 {
   "name": "code2svg",
   "private": true,
-  "version": "1.16.0",
+  "version": "1.17.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,8 @@
     "@uiw/react-codemirror": "^4.23.7",
     "gifenc": "^1.0.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "svgo": "^4.0.2"
   },
   "devDependencies": {
     "@codemirror/lang-xml": "^6.1.0",
