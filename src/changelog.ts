@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.22.0',
+    date: '2026-07-24',
+    changes: [
+      'Added a full SEO layer — per-page title/description, canonical, Open Graph and Twitter cards, a branded social share image, JSON-LD structured data, robots.txt, and a sitemap.',
+      'Each tool now has always-present, crawlable page content below it (intro, how-to steps, FAQ, and About / Terms / Privacy) so search engines and visitors without JavaScript see real content.',
+    ],
+  },
+  {
     version: '1.21.2',
     date: '2026-07-24',
     changes: [

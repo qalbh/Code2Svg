@@ -1,8 +1,23 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Production origin — defined once. Change this (and public/robots.txt +
+// public/sitemap.xml) when a custom domain is added. Every %ORIGIN% token in
+// the HTML entries (canonical, Open Graph, Twitter, JSON-LD) is replaced with
+// this value at build time.
+const ORIGIN = 'https://codetosvg.vercel.app'
+
+function injectOrigin() {
+  return {
+    name: 'inject-origin',
+    transformIndexHtml(html: string) {
+      return html.replaceAll('%ORIGIN%', ORIGIN)
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), injectOrigin()],
   build: {
     rollupOptions: {
       // Multi-page: two real HTML entries. Relative paths resolve from the

@@ -4,14 +4,87 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Convert PNG or JPG images to SVG online, free, in your browser. Trace logos, icons, and flat graphics to scalable vector SVG with live preview — nothing is uploaded." />
-    <title>Image to SVG Converter — PNG & JPG to SVG | Code2Svg</title>
+    <title>Image to SVG Converter — PNG &amp; JPG to SVG | Code2Svg</title>
+    <meta name="description" content="Convert PNG or JPG images to SVG online, free, in your browser. Trace logos, icons, and flat graphics into scalable vector SVG with a live preview — nothing is uploaded." />
+    <link rel="canonical" href="%ORIGIN%/image-to-svg" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#060608" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e5e3ec" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Code2Svg" />
+    <meta property="og:title" content="Image to SVG Converter — PNG & JPG to SVG" />
+    <meta property="og:description" content="Convert PNG or JPG images to SVG online, free, in your browser. Trace logos, icons, and flat graphics into scalable vector SVG with a live preview — nothing is uploaded." />
+    <meta property="og:url" content="%ORIGIN%/image-to-svg" />
+    <meta property="og:image" content="%ORIGIN%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Image to SVG Converter — PNG & JPG to SVG" />
+    <meta name="twitter:description" content="Convert PNG or JPG images to SVG online, free, in your browser. Best for logos, icons, and flat graphics — nothing is uploaded." />
+    <meta name="twitter:image" content="%ORIGIN%/og-image.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Code2Svg — Image to SVG Converter",
+        "url": "%ORIGIN%/image-to-svg",
+        "description": "Free online PNG and JPG to SVG converter. Trace raster images into scalable vector SVG in your browser, with adjustable colors, detail, and smoothing.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any (browser)",
+        "browserRequirements": "Requires JavaScript. Runs in any modern browser.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I convert a PNG or JPG to SVG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Upload or drag a PNG or JPG onto the panel, adjust the number of colors, detail, and smoothing, then copy the generated SVG code or download the .svg file. Everything runs in your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is completely free and runs entirely on your device. Your image is never uploaded to a server." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work for photographs?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tracing works best for logos, icons, and flat or simple graphics with solid areas of color. Photographs contain smooth gradients and fine detail that trace into thousands of paths, producing a large, blurry SVG, so they are not a good fit." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which image formats can I convert?",
+            "acceptedAnswer": { "@type": "Answer", "text": "You can trace PNG and JPG images. Large images are automatically scaled down before tracing so the process stays fast." }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the difference between a raster image and an SVG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "PNG and JPG are raster formats made of pixels, so they blur when scaled up. SVG is a vector format made of shapes and paths that stays crisp at any size — ideal for logos and icons." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work offline?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tracing runs entirely client-side, so once the page has loaded it keeps working even without a network connection." }
+          }
+        ]
+      }
+    </script>
+
     <script>
       (function () {
         var stored = localStorage.getItem('code2svg-theme')
@@ -25,5 +98,81 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main-image.tsx"></script>
+
+    <!-- Static, always-present content for search engines, social crawlers, and
+         visitors without JavaScript. The interactive tracer renders above. -->
+    <section class="seo-content" aria-label="About this image to SVG converter">
+      <div class="seo-inner">
+        <h1>Image to SVG Converter — PNG &amp; JPG to SVG</h1>
+        <p class="seo-lead">
+          Code2Svg's <strong>image to SVG converter</strong> traces a raster <strong>PNG or JPG</strong> into a
+          scalable <strong>SVG</strong> right in your browser. Upload or drag in an image, fine-tune the number of
+          colors, detail, and smoothing, preview the result live, then copy the SVG code or download the
+          <code>.svg</code> file. It works best for logos, icons, and flat or simple graphics — nothing is uploaded
+          to a server.
+        </p>
+
+        <h2>How to convert PNG to SVG in 3 steps</h2>
+        <ol class="seo-steps">
+          <li>Upload or drag a <code>.png</code> or <code>.jpg</code> image onto the source panel.</li>
+          <li>Adjust the number of colors, detail, and smoothing until the traced preview looks right.</li>
+          <li>Copy the generated SVG code, or download the <code>.svg</code> file.</li>
+        </ol>
+
+        <h2>Frequently asked questions</h2>
+        <div class="seo-faq">
+          <div class="seo-faq-item">
+            <h3>How do I convert a PNG or JPG to SVG?</h3>
+            <p>Upload or drag a PNG or JPG onto the panel, adjust the number of colors, detail, and smoothing, then copy the generated SVG code or download the .svg file. Everything runs in your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Is it free?</h3>
+            <p>Yes. It is completely free and runs entirely on your device. Your image is never uploaded to a server.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Does it work for photographs?</h3>
+            <p>Tracing works best for logos, icons, and flat or simple graphics with solid areas of color. Photographs contain smooth gradients and fine detail that trace into thousands of paths, producing a large, blurry SVG, so they are not a good fit.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Which image formats can I convert?</h3>
+            <p>You can trace PNG and JPG images. Large images are automatically scaled down before tracing so the process stays fast.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>What is the difference between a raster image and an SVG?</h3>
+            <p>PNG and JPG are raster formats made of pixels, so they blur when scaled up. SVG is a vector format made of shapes and paths that stays crisp at any size — ideal for logos and icons.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Does it work offline?</h3>
+            <p>Tracing runs entirely client-side, so once the page has loaded it keeps working even without a network connection.</p>
+          </div>
+        </div>
+
+        <div class="seo-legal">
+          <section id="about">
+            <h2>About</h2>
+            <p>Code2Svg is a free, client-side toolkit for working with SVG. This tracer turns raster images into vectors entirely in your browser — there is no backend, no account, and no server-side processing. See the companion <a href="/">SVG to Image</a> converter for the other direction.</p>
+          </section>
+          <section id="terms">
+            <h2>Terms &amp; Conditions</h2>
+            <p>Code2Svg is provided free of charge, as-is and without warranties of any kind. You retain all rights to any images you process; because everything happens in your browser, we never see, receive, or store your content. To the fullest extent permitted by law, the creators are not liable for any damages arising from use of the tool. Always verify exported files before relying on them.</p>
+          </section>
+          <section id="privacy">
+            <h2>Privacy Policy</h2>
+            <p>Code2Svg runs entirely in your browser. The images you upload and the SVGs you generate never leave your device — there is no backend server, so nothing is transmitted, logged, or stored by us. The app saves only your theme preference in your browser's local storage; clearing your browser storage removes it. Code2Svg uses no cookies, no analytics, and no third-party tracking, and shares no data with third parties.</p>
+          </section>
+        </div>
+
+        <footer class="seo-footer">
+          <nav class="seo-footer-nav" aria-label="Site">
+            <a href="/">SVG → Image</a>
+            <a href="/image-to-svg">Image → SVG</a>
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms</a>
+            <a href="#about">About</a>
+          </nav>
+          <p>Code2Svg — a free, private, browser-based SVG toolkit. Nothing you convert is uploaded.</p>
+        </footer>
+      </div>
+    </section>
   </body>
 </html>

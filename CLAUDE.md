@@ -116,6 +116,31 @@ APIs (`DOMParser`, `canvas`, `Image`, `btoa`/`TextEncoder`) but hold no React st
   main editor and the read-only output-drawer editor) — keep both in sync if you
   change one.
 
+## SEO layer
+
+Both pages are client-rendered, so crawlers/AdSense would otherwise see an empty
+`#root`. Each HTML entry therefore carries a real, always-present `<section
+class="seo-content">` **after** `#root` (a body sibling, not inside it) with an
+`<h1>`, intro, how-to steps, FAQ, and About/Terms/Privacy sections (`#about`,
+`#terms`, `#privacy`) plus a footer linking to them. This content is visible (not
+hidden) and styled with the same CSS variables — it reads as the page's content
+below the tool. Keep the FAQ copy in sync with the `FAQPage` JSON-LD in the same
+file (they must match). The React brand wordmark is a `<span class="brand-name">`,
+not an `<h1>`, so each page has exactly one `<h1>` (the SEO one).
+
+- **Production origin is defined once** as `ORIGIN` in `vite.config.ts`; a small
+  `injectOrigin` plugin replaces every `%ORIGIN%` token in the HTML (canonical,
+  OG, Twitter, JSON-LD) at build time. `public/robots.txt` and
+  `public/sitemap.xml` hardcode the same origin (they aren't HTML-transformed) —
+  update all three when the domain changes.
+- **Layout:** `.app` is `height: 100vh` and `.i2s-app` is `min-height: 100vh` so
+  the tool fills the first screen and the page scrolls to the SEO content. The
+  fixed aurora backdrop lives inside `.app` (z-index 1); `.seo-content` uses
+  `z-index: 2` so it paints above it.
+- **`public/og-image.png`** (1200×630) is a real committed PNG (OG doesn't render
+  SVG). Regenerate by rendering a 1200×630 HTML design with headless Chromium and
+  screenshotting — it is not produced by the Vite build.
+
 ## How image conversion works (`svgToImage.ts`)
 
 1. `parseSvg` — parses with `DOMParser`, throws on invalid XML or a missing `<svg>`.

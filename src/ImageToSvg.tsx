@@ -31,25 +31,6 @@ interface Loaded {
   height: number
 }
 
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: 'How do I convert a PNG or JPG to SVG?',
-    a: 'Upload or drag an image onto the panel, adjust the number of colors, detail, and smoothing to taste, then copy the generated SVG code or download the .svg file. Everything runs in your browser.',
-  },
-  {
-    q: 'Is it free?',
-    a: 'Yes — it is completely free and runs entirely on your device. Your image is never uploaded to a server.',
-  },
-  {
-    q: 'Does it work for photographs?',
-    a: 'Tracing works best for logos, icons, and flat or simple graphics with solid areas of color. Photographs contain smooth gradients and fine detail that trace into thousands of paths, producing a large, blurry SVG — so they are not a good fit.',
-  },
-  {
-    q: 'What is the difference between a raster image and an SVG?',
-    a: 'PNG and JPG are raster formats made of pixels, so they blur when scaled up. SVG is a vector format made of shapes and paths that stays crisp at any size — ideal for logos and icons.',
-  },
-]
-
 export default function ImageToSvg() {
   const [theme, setTheme] = useTheme()
 
@@ -400,23 +381,6 @@ export default function ImageToSvg() {
           </div>
         </aside>
       </main>
-
-      {/* FAQ / how-to (SEO content) */}
-      <section className="i2s-faq">
-        <h2>How to convert PNG &amp; JPG images to SVG</h2>
-        <p className="i2s-faq-intro">
-          Code2Svg traces raster images into scalable vector graphics right in your browser — nothing
-          is uploaded. Drop in a logo or icon, fine-tune the tracing, and export a clean .svg.
-        </p>
-        <div className="i2s-faq-grid">
-          {FAQ.map((item) => (
-            <div className="i2s-faq-item" key={item.q}>
-              <h3>{item.q}</h3>
-              <p>{item.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       <footer className="footer">
         <span className="footer-status">

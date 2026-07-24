@@ -4,14 +4,82 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Convert SVG code to downloadable PNG, JPG, or WebP images. Free online SVG to image converter with live preview." />
-    <title>Code2Svg — SVG to Image Converter</title>
+    <title>SVG to Image Converter — SVG to PNG, JPG &amp; WebP | Code2Svg</title>
+    <meta name="description" content="Free online SVG to image converter. Turn SVG code into PNG, JPG, or WebP with a live preview, exact resizing, and recolor — all in your browser. Nothing is uploaded." />
+    <link rel="canonical" href="%ORIGIN%/" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#060608" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e5e3ec" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Code2Svg" />
+    <meta property="og:title" content="SVG to Image Converter — SVG to PNG, JPG & WebP" />
+    <meta property="og:description" content="Free online SVG to image converter. Turn SVG code into PNG, JPG, or WebP with a live preview, exact resizing, and recolor — all in your browser. Nothing is uploaded." />
+    <meta property="og:url" content="%ORIGIN%/" />
+    <meta property="og:image" content="%ORIGIN%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SVG to Image Converter — SVG to PNG, JPG & WebP" />
+    <meta name="twitter:description" content="Free online SVG to image converter. Turn SVG code into PNG, JPG, or WebP in your browser — nothing is uploaded." />
+    <meta name="twitter:image" content="%ORIGIN%/og-image.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Code2Svg — SVG to Image Converter",
+        "url": "%ORIGIN%/",
+        "description": "Free online SVG to image converter. Turn SVG code into PNG, JPG, or WebP with a live preview, exact resizing, and recolor — entirely in your browser.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any (browser)",
+        "browserRequirements": "Requires JavaScript. Runs in any modern browser.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is Code2Svg free to use?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Code2Svg is completely free, with no account, sign-up, or watermarks. Every feature runs in your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my SVG uploaded anywhere? Is it private?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Nothing is uploaded. The conversion happens locally on your device using the canvas and DOMParser APIs, so your SVG code and exported images never leave your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which image formats can I export to?",
+            "acceptedAnswer": { "@type": "Answer", "text": "You can export to PNG, JPG, and WebP raster images, download the raw SVG, or record animated SVGs as an animated GIF." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize or recolor the image before exporting?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Export at an exact pixel width and height or a scale factor, add a background color, auto-crop to the artwork, and remap fill and stroke colors before you download." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work offline?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Conversions run entirely client-side, so once the page has loaded the tool keeps working even on a slow or dropped connection." }
+          }
+        ]
+      }
+    </script>
+
     <script>
       (function () {
         var stored = localStorage.getItem('code2svg-theme')
@@ -25,5 +93,88 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Static, always-present content for search engines, social crawlers, and
+         visitors without JavaScript. The interactive tool renders above; this is
+         real page content that reads naturally below it. -->
+    <section class="seo-content" aria-label="About this SVG to image converter">
+      <div class="seo-inner">
+        <h1>SVG to Image Converter</h1>
+        <p class="seo-lead">
+          Code2Svg is a free, browser-based <strong>SVG to image converter</strong>. Paste or upload SVG
+          code and export it as a <strong>PNG, JPG, or WebP</strong> image — or download the raw SVG or an
+          animated GIF. You get a live, zoomable preview, exact pixel or scale sizing, a background-color
+          option, auto-cropping, and a recolor tool that detects the fill and stroke colors in your artwork.
+          Everything runs on your device, so nothing is ever uploaded to a server.
+        </p>
+
+        <h2>How to convert SVG to PNG in 3 steps</h2>
+        <ol class="seo-steps">
+          <li>Paste your SVG markup into the editor, or upload / drag in an <code>.svg</code> file.</li>
+          <li>Pick a format (PNG, JPG, or WebP) and set the size, background, or scale you want.</li>
+          <li>Click <em>Download</em> to save the image, or copy the rendered PNG straight to your clipboard.</li>
+        </ol>
+
+        <h2>Features</h2>
+        <ul class="seo-list">
+          <li>Export to PNG, JPG, WebP, raw SVG, or animated GIF</li>
+          <li>Exact width/height or scale (@1x–@4x) with an aspect-ratio lock</li>
+          <li>Live preview with zoom, pan, rotate, and flip that carry through to the export</li>
+          <li>Recolor fill/stroke colors and add a solid background before exporting</li>
+          <li>Optimize with SVGO and pretty-print (Format) your SVG</li>
+          <li>Turn your SVG into React, React Native, or a Data URI</li>
+        </ul>
+
+        <h2>Frequently asked questions</h2>
+        <div class="seo-faq">
+          <div class="seo-faq-item">
+            <h3>Is Code2Svg free to use?</h3>
+            <p>Yes. Code2Svg is completely free, with no account, sign-up, or watermarks. Every feature runs in your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Is my SVG uploaded anywhere? Is it private?</h3>
+            <p>Nothing is uploaded. The conversion happens locally on your device using the canvas and DOMParser APIs, so your SVG code and exported images never leave your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Which image formats can I export to?</h3>
+            <p>You can export to PNG, JPG, and WebP raster images, download the raw SVG, or record animated SVGs as an animated GIF.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Can I resize or recolor the image before exporting?</h3>
+            <p>Yes. Export at an exact pixel width and height or a scale factor, add a background color, auto-crop to the artwork, and remap fill and stroke colors before you download.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Does it work offline?</h3>
+            <p>Conversions run entirely client-side, so once the page has loaded the tool keeps working even on a slow or dropped connection.</p>
+          </div>
+        </div>
+
+        <div class="seo-legal">
+          <section id="about">
+            <h2>About</h2>
+            <p>Code2Svg is a free, client-side toolkit for converting and inspecting SVG artwork. It runs entirely in your browser using the canvas and DOMParser APIs — there is no backend, no account, and no server-side processing. It also offers a companion <a href="/image-to-svg">Image to SVG</a> tracing tool.</p>
+          </section>
+          <section id="terms">
+            <h2>Terms &amp; Conditions</h2>
+            <p>Code2Svg is provided free of charge, as-is and without warranties of any kind, for converting and inspecting SVG images. You retain all rights to any markup or images you process; because everything happens in your browser, we never see, receive, or store your content. To the fullest extent permitted by law, the creators are not liable for any damages arising from use of the tool. Always verify exported files before relying on them.</p>
+          </section>
+          <section id="privacy">
+            <h2>Privacy Policy</h2>
+            <p>Code2Svg runs entirely in your browser. The SVG you paste or upload and any image you export never leave your device — there is no backend server, so nothing is transmitted, logged, or stored by us. The app saves only your theme preference and Optimize settings in your browser's local storage; clearing your browser storage removes them. Code2Svg uses no cookies, no analytics, and no third-party tracking, and shares no data with third parties.</p>
+          </section>
+        </div>
+
+        <footer class="seo-footer">
+          <nav class="seo-footer-nav" aria-label="Site">
+            <a href="/">SVG → Image</a>
+            <a href="/image-to-svg">Image → SVG</a>
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms</a>
+            <a href="#about">About</a>
+          </nav>
+          <p>Code2Svg — a free, private, browser-based SVG toolkit. Nothing you convert is uploaded.</p>
+        </footer>
+      </div>
+    </section>
   </body>
 </html>

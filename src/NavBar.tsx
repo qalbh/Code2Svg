@@ -54,7 +54,7 @@ export function NavBar({ theme, setTheme, active }: NavBarProps) {
             </span>
           </span>
           <div>
-            <h1>Code2Svg</h1>
+            <span className="brand-name">Code2Svg</span>
             <p>SVG toolkit</p>
           </div>
         </a>
