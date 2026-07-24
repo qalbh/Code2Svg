@@ -20,6 +20,7 @@ import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
 import { DEFAULT_OPTIMIZE_OPTIONS, PLUGIN_GROUPS, optimizeSvg, type OptimizeOptions } from './optimizeSvg'
 import { CHANGELOG } from './changelog'
+import { INFO_PAGES, type InfoPage } from './infoPages'
 
 const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
   <defs>
@@ -198,6 +199,7 @@ export default function App() {
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
+  const [infoPageId, setInfoPageId] = useState<InfoPage['id'] | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [gifDuration, setGifDuration] = useState(2)
   const [gifFps, setGifFps] = useState(20)
@@ -807,6 +809,32 @@ export default function App() {
         </div>
       )}
 
+      {infoPageId && (() => {
+        const infoPage = INFO_PAGES.find((p) => p.id === infoPageId)
+        if (!infoPage) return null
+        return (
+          <div className="modal-overlay" onClick={() => setInfoPageId(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-head">
+                <span className="pane-title">{infoPage.title}</span>
+                <button className="ghost" onClick={() => setInfoPageId(null)}>Close</button>
+              </div>
+              <div className="modal-body">
+                <p className="hint">Last updated {infoPage.updated}</p>
+                {infoPage.sections.map((section, i) => (
+                  <div className="info-section" key={i}>
+                    {section.heading && <h3>{section.heading}</h3>}
+                    {section.paragraphs.map((para, j) => (
+                      <p key={j}>{para}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       <main
         className="workspace"
         ref={workspaceRef}
@@ -1272,6 +1300,13 @@ export default function App() {
 
       <footer className="footer">
         <span>Runs entirely in your browser — nothing is uploaded.</span>
+        <nav className="footer-links">
+          {INFO_PAGES.map((p) => (
+            <button key={p.id} className="link-btn" onClick={() => setInfoPageId(p.id)}>
+              {p.label}
+            </button>
+          ))}
+        </nav>
       </footer>
     </div>
   )
