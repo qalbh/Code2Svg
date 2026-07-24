@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.0',
+    date: '2026-07-24',
+    changes: [
+      'Recolor swaps — detect fill/stroke/gradient colors in the SVG and remap them via color pickers before export.',
+    ],
+  },
+  {
     version: '1.6.1',
     date: '2026-07-24',
     changes: [

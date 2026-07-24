@@ -116,6 +116,47 @@ export function getSvgDimensions(code: string): Dimensions {
   return intrinsicSize(parseSvg(code))
 }
 
+const COLOR_ATTR_PATTERN = /\b(?:fill|stroke|stop-color)\s*=\s*["']([^"']+)["']/gi
+const NON_COLOR_VALUES = new Set(['none', 'transparent', 'currentcolor'])
+
+export function findColors(code: string): string[] {
+  const seen = new Set<string>()
+  const colors: string[] = []
+  for (const match of code.matchAll(COLOR_ATTR_PATTERN)) {
+    const raw = match[1].trim()
+    const key = raw.toLowerCase()
+    if (!raw || NON_COLOR_VALUES.has(key) || key.startsWith('url(')) continue
+    if (seen.has(key)) continue
+    seen.add(key)
+    colors.push(raw)
+  }
+  return colors
+}
+
+export function replaceColor(code: string, oldColor: string, newColor: string): string {
+  const escaped = oldColor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(`\\b(fill|stroke|stop-color)(\\s*=\\s*)(["'])${escaped}\\3`, 'gi')
+  return code.replace(pattern, (_full, attr, eq, quote) => `${attr}${eq}${quote}${newColor}${quote}`)
+}
+
+export function normalizeColorToHex(color: string): string | null {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  const sentinel = '#010203'
+  ctx.fillStyle = sentinel
+  ctx.fillStyle = color
+  const result = ctx.fillStyle
+  if (result === sentinel) return null
+
+  if (result.startsWith('#')) return result
+  const match = result.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+  if (!match) return null
+  const toHex = (n: string) => Number(n).toString(16).padStart(2, '0')
+  return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`
+}
+
 function svgToDataUrl(code: string): string {
   const encoded = encodeURIComponent(code)
     .replace(/'/g, '%27')

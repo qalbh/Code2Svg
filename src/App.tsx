@@ -5,9 +5,12 @@ import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
 import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night'
 import {
   fileExtension,
+  findColors,
   findXmlError,
   getSvgDimensions,
+  normalizeColorToHex,
   renderToBlob,
+  replaceColor,
   type ImageFormat,
 } from './svgToImage'
 import { CHANGELOG } from './changelog'
@@ -90,6 +93,7 @@ export default function App() {
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
+  const [showRecolor, setShowRecolor] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
@@ -128,6 +132,17 @@ export default function App() {
       return null
     }
   }, [trimmed])
+
+  const colorSwatches = useMemo(() => {
+    return findColors(trimmed).map((value) => ({
+      value,
+      hex: normalizeColorToHex(value) ?? '#000000',
+    }))
+  }, [trimmed])
+
+  const updateColor = useCallback((oldColor: string, newColor: string) => {
+    setCode((prev) => replaceColor(prev, oldColor, newColor))
+  }, [])
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -356,11 +371,50 @@ export default function App() {
         </div>
       )}
 
+      {showRecolor && (
+        <div className="modal-overlay" onClick={() => setShowRecolor(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <span className="pane-title">Recolor</span>
+              <button className="ghost" onClick={() => setShowRecolor(false)}>Close</button>
+            </div>
+            <div className="modal-body">
+              {colorSwatches.length === 0 ? (
+                <p className="hint">No fill, stroke, or gradient colors found in this SVG.</p>
+              ) : (
+                colorSwatches.map(({ value, hex }) => (
+                  <div className="color-row" key={value}>
+                    <input
+                      type="color"
+                      value={hex}
+                      onChange={(e) => updateColor(value, e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      defaultValue={value}
+                      spellCheck={false}
+                      onBlur={(e) => {
+                        const next = e.target.value.trim()
+                        if (next && next !== value) updateColor(value, next)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur()
+                      }}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="workspace">
         <section className="pane editor-pane">
           <div className="pane-head">
             <span className="pane-title">SVG code</span>
             <div className="pane-tools">
+              <button className="ghost" onClick={() => setShowRecolor(true)}>Recolor</button>
               <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
               <button className="ghost" onClick={copyCode}>Copy</button>
               <input
