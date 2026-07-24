@@ -16,6 +16,7 @@ import {
   type ImageFormat,
   type Rotation,
 } from './svgToImage'
+import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
 import { CHANGELOG } from './changelog'
 
@@ -63,6 +64,14 @@ const xmlLinter = linter((view): Diagnostic[] => {
 
 type PreviewBg = 'checker' | 'white' | 'black'
 type AppTheme = 'dark' | 'light'
+type OutputTab = 'preview' | 'react' | 'reactNative' | 'dataUri'
+
+const OUTPUT_TABS: { id: OutputTab; label: string }[] = [
+  { id: 'preview', label: 'Preview' },
+  { id: 'react', label: 'React' },
+  { id: 'reactNative', label: 'React Native' },
+  { id: 'dataUri', label: 'Data URI' },
+]
 
 // Inline stroke icons (24-grid, currentColor) — keeps the app dependency-light.
 const ICON_PATHS: Record<string, string> = {
@@ -242,6 +251,44 @@ export default function App() {
     setFlipH(false)
     setFlipV(false)
   }, [])
+
+  // Output drawer (React / React Native / Data URI representations).
+  const [outputTab, setOutputTab] = useState<OutputTab>('preview')
+  const [drawerHeight, setDrawerHeight] = useState(260)
+  const lastCodeTab = useRef<Exclude<OutputTab, 'preview'>>('react')
+  const drawerOpen = outputTab !== 'preview'
+
+  const selectOutputTab = useCallback((tab: OutputTab) => {
+    if (tab !== 'preview') lastCodeTab.current = tab
+    setOutputTab(tab)
+  }, [])
+
+  const toggleDrawer = useCallback(() => {
+    setOutputTab((prev) => (prev === 'preview' ? lastCodeTab.current : 'preview'))
+  }, [])
+
+  const startDrawerResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const pane = previewPaneRef.current
+    const startY = e.clientY
+    const startHeight = drawerHeight
+    const handleMove = (moveEvent: MouseEvent) => {
+      const paneHeight = pane?.getBoundingClientRect().height ?? 600
+      // Dragging up (smaller clientY) grows the drawer.
+      const next = startHeight + (startY - moveEvent.clientY)
+      setDrawerHeight(Math.max(120, Math.min(next, paneHeight - 140)))
+    }
+    const handleUp = () => {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+  }, [drawerHeight])
 
   const [editorWidth, setEditorWidth] = useState<number | null>(null)
   const workspaceRef = useRef<HTMLElement>(null)
@@ -527,6 +574,35 @@ export default function App() {
       setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
     }
   }, [code])
+
+  const outputContent = useMemo(() => {
+    if (outputTab === 'preview') return { text: '', label: '', error: null as string | null }
+    const label = outputTab === 'react' ? 'React' : outputTab === 'reactNative' ? 'React Native' : 'Data URI'
+    if (!trimmed) {
+      return { text: '', label, error: `Add some SVG code to generate the ${label} output.` }
+    }
+    try {
+      const text =
+        outputTab === 'react'
+          ? toReact(trimmed)
+          : outputTab === 'reactNative'
+            ? toReactNative(trimmed)
+            : toDataUri(trimmed)
+      return { text, label, error: null }
+    } catch {
+      return { text: '', label, error: "This SVG isn't valid, so it can't be converted." }
+    }
+  }, [trimmed, outputTab])
+
+  const copyOutput = useCallback(async () => {
+    if (!outputContent.text) return
+    try {
+      await navigator.clipboard.writeText(outputContent.text)
+      setStatus({ kind: 'info', text: `${outputContent.label} output copied to clipboard.` })
+    } catch {
+      setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
+    }
+  }, [outputContent])
 
   const formatCode = useCallback(() => {
     if (!trimmed) {
@@ -827,6 +903,53 @@ export default function App() {
             ) : (
               <p className="empty">Your SVG preview will appear here.</p>
             )}
+          </div>
+
+          <div className="output-area">
+            {drawerOpen && (
+              <div className="output-drawer" style={{ height: drawerHeight }}>
+                <div className="output-resizer" onMouseDown={startDrawerResize} />
+                <div className="output-head">
+                  <span className="output-lang">{outputContent.label}</span>
+                  <button className="ghost" onClick={copyOutput} disabled={!outputContent.text}>
+                    Copy
+                  </button>
+                </div>
+                <div className="output-code">
+                  {outputContent.error ? (
+                    <p className="empty">{outputContent.error}</p>
+                  ) : (
+                    <CodeMirror
+                      value={outputContent.text}
+                      height="100%"
+                      theme={theme === 'dark' ? tokyoNight : 'light'}
+                      extensions={[xml()]}
+                      editable={false}
+                      className="output-editor"
+                      basicSetup={{ lineNumbers: false, foldGutter: false, highlightActiveLine: false }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="output-tabs">
+              {OUTPUT_TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={outputTab === t.id ? 'output-tab active' : 'output-tab'}
+                  onClick={() => selectOutputTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+              <button
+                className="icon-btn output-chevron"
+                onClick={toggleDrawer}
+                title={drawerOpen ? 'Collapse output' : 'Expand output'}
+              >
+                {drawerOpen ? '▾' : '▴'}
+              </button>
+            </div>
           </div>
         </section>
 

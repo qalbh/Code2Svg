@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16.0',
+    date: '2026-07-24',
+    changes: [
+      'New Output drawer under the preview — switch between Preview, React, React Native, and Data URI representations of your SVG, each with a Copy button. Updates live as you edit.',
+    ],
+  },
+  {
     version: '1.15.0',
     date: '2026-07-24',
     changes: [
