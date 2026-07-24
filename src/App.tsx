@@ -225,7 +225,10 @@ export default function App() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `code2svg.${fileExtension(format)}`
+      // @2x/@3x-style suffix so scaled exports drop straight into design-tool
+      // asset pipelines. Only meaningful for scale-based (not custom-pixel) sizing.
+      const scaleSuffix = format !== 'svg' && sizeMode === 'scale' && scale !== 1 ? `@${scale}x` : ''
+      link.download = `code2svg${scaleSuffix}.${fileExtension(format)}`
       document.body.appendChild(link)
       link.click()
       link.remove()

@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.8.0',
+    date: '2026-07-24',
+    changes: [
+      'Scaled exports now download with a @2x/@3x filename suffix, so they drop straight into design-tool asset pipelines.',
+    ],
+  },
+  {
     version: '1.7.3',
     date: '2026-07-24',
     changes: [
