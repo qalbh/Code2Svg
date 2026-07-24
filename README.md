@@ -6,6 +6,9 @@ in the browser — no code is ever uploaded to a server.
 
 ![Code2Svg](https://img.shields.io/badge/status-ready-6366f1)
 
+<img width="1691" height="974" alt="image" src="https://github.com/user-attachments/assets/56222d6f-c464-42fa-a162-23b47dc32385" />
+
+
 ## Features
 
 - **Live editor** — syntax-highlighted SVG editing (CodeMirror) with instant preview.
