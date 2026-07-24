@@ -14,6 +14,55 @@ in-app **About**, **Terms & Conditions**, and **Privacy Policy** pages. All
 processing happens client-side in a `<canvas>` / `DOMParser`; nothing is ever
 uploaded to a server.
 
+Code2Svg is now a **two-tool toolkit** with a shared header/footer and top nav:
+the **SVG → Image** converter (`/`) and the **Image → SVG** raster tracer
+(`/image-to-svg`). Everything is free, private, and browser-only.
+
+## Features
+
+Grouped by area. The in-app **"What's new"** changelog (`src/changelog.ts`) is the
+authoritative, dated record; the list below is a functional overview.
+
+**SVG → Image tool (`/`, `App.tsx`)**
+- Import: paste SVG markup, upload an `.svg`, or drag-and-drop a file anywhere.
+- CodeMirror editor with XML syntax highlighting, a custom theme, and inline XML
+  error highlighting (gutter marker + hover tooltip) as you type.
+- **Export** to PNG, JPG, WebP, raw SVG, or animated GIF (animated SVGs only).
+- Size: scale presets (0.5×–4×, with an `@2x`/`@3x` filename suffix) or exact
+  custom width/height with an aspect-ratio lock.
+- Quality slider (JPG/WebP), optional background color (six swatch presets + a
+  custom picker), and **auto-crop to content** (trims transparent *and*
+  solid-color padding).
+- **Estimated output file size**, updating live with format/scale/quality/trim.
+- **Copy image (PNG)** to the clipboard, and **Copy** the SVG source.
+- **Recolor**: detects fill/stroke/gradient colors and remaps them via a palette
+  popover; updates live while dragging the picker.
+- **Format** (non-destructive pretty-print) and **Optimize** (SVGO minify) with a
+  per-plugin settings popover and a byte-savings readout.
+- **Preview**: zoom (scroll/buttons), pan (drag), fit, fullscreen, rotate 90°
+  L/R, flip H/V, and reset — rotate/flip carry through to the export. Grid /
+  Light / Dark backdrops, a floating dimension chip, and a drop-shadow.
+- **Output drawer**: view the SVG as React, React Native, or a Data URI, each
+  with Copy; updates live as you edit.
+- Draggable divider to resize the code vs. preview panes (double-click resets).
+
+**Image → SVG tool (`/image-to-svg`, `ImageToSvg.tsx`)**
+- Upload or drag a PNG/JPG and trace it to a scalable SVG client-side
+  (`imagetracerjs`); large images are downscaled first for speed.
+- Adjustable **Number of colors / Detail / Smoothing** (each with a hover info
+  tooltip), live retrace, source thumbnail, live traced preview.
+- Copy the SVG code or download the `.svg`. Honest "best for logos/icons/flat
+  graphics, not photos" guidance.
+
+**Shared / app-wide**
+- Light + dark themes with a segmented Dark/Light switch, remembered across
+  visits and pages (`localStorage`).
+- Identical glassmorphic header (logo, tool nav, theme toggle, "What's new") and
+  footer (About / Terms / Privacy) on both pages.
+- In-app **About / Terms & Conditions / Privacy** modals.
+- Full **SEO layer**: per-page meta/OG/Twitter, JSON-LD, `og-image.png`,
+  `robots.txt`, `sitemap.xml`, and static crawlable content (see the SEO section).
+
 ## Tech stack
 
 - **React 18** + **TypeScript** (function components + hooks only)
@@ -242,3 +291,45 @@ being wrong (frozen GIFs, transform-less exports).
 Vercel is connected to the GitHub repo and auto-deploys on push to `main`
 (`framework: vite`, build `npm run build`, output `dist/`). The app is fully
 client-side — no environment variables or backend to configure.
+
+Production origin: **https://codetosvg.vercel.app** (defined once as `ORIGIN` in
+`vite.config.ts`; also hardcoded in `public/robots.txt` and `public/sitemap.xml`).
+
+## Version history
+
+`src/changelog.ts` is the source of truth (newest first, dated); this is a
+condensed index. Bump the version and prepend a changelog entry for every shipped
+feature (see the Feature workflow above).
+
+| Version | Summary |
+|---------|---------|
+| 1.22.0 | Full SEO layer — per-page meta/OG/Twitter, JSON-LD, og-image, robots, sitemap, static crawlable content |
+| 1.21.2 | Unified header/footer across both pages; Load sample / Clear moved into the code toolbar |
+| 1.21.1 | Image → SVG: slider info tooltips, single-row FAQ, shared footer links |
+| 1.21.0 | New **Image → SVG** tracing tool + shared top navigation |
+| 1.20.0 | Glassmorphic redesign — floating panels, animated aurora backdrop, glowing logo, shimmer Download |
+| 1.19.0 | Typography/theme refresh (Space Grotesk / JetBrains Mono, custom editor theme, dimension chip, copy confirmations) |
+| 1.18.0 | About / Terms & Conditions / Privacy pages, linked from the footer |
+| 1.17.0 | **Optimize** button (SVGO) with a byte-savings readout and per-plugin settings |
+| 1.16.0 | **Output drawer** — React / React Native / Data URI representations |
+| 1.15.0 | Consolidated preview toolbar (zoom/fit/fullscreen/rotate/flip/reset) + palette popover |
+| 1.14.0 | Removed local autosave |
+| 1.13.0 | Draggable divider between the code and preview panes |
+| 1.12.0 | Animated SVG → GIF export |
+| 1.11.0 | Estimated file size in the Export panel |
+| 1.10.0 | **Format** (pretty-print) button |
+| 1.9.0 | Zoom & pan the preview |
+| 1.8.0 | `@2x`/`@3x` filename suffix on scaled exports |
+| 1.7.3 | Recolor updates live while dragging the picker |
+| 1.7.2 | Fixed recolor picker closing immediately on click |
+| 1.7.1 | Recolor redesigned as an always-visible swatch bar |
+| 1.7.0 | **Recolor** — detect and remap fill/stroke/gradient colors |
+| 1.6.1 | Trim also crops solid-color padding, not just transparent edges |
+| 1.6.0 | Trim transparent edges (auto-crop to content) |
+| 1.4.0 | Inline XML error highlighting in the editor |
+| 1.3.0 | Drag-and-drop an `.svg` file to load it |
+| 1.2.0 | Light/dark theme toggle, remembered across visits |
+| 1.1.0 | Exact pixel width/height export + copy PNG to clipboard |
+| 1.0.0 | Initial release — SVG → PNG/JPG/WebP/SVG, live preview, scale/quality/background, upload/paste, copy source |
+
+(No 1.5.0 was released — the changelog jumps 1.4.0 → 1.6.0.)
