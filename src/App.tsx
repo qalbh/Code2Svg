@@ -808,6 +808,14 @@ export default function App() {
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      <div className="backdrop" aria-hidden="true">
+        <div className="aurora aurora-a" />
+        <div className="aurora aurora-b" />
+        <div className="aurora aurora-c" />
+        <div className="noise" />
+        <div className="vignette" />
+      </div>
+
       {isDragging && (
         <div className="drop-overlay">
           <div className="drop-overlay-inner">Drop your .svg file to load it</div>
@@ -816,11 +824,14 @@ export default function App() {
 
       <header className="topbar">
         <div className="brand">
-          <span className="logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
+          <span className="brand-logo" aria-hidden="true">
+            <span className="logo-glow" />
+            <span className="logo">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+            </span>
           </span>
           <div>
             <h1>Code2Svg</h1>
@@ -828,17 +839,22 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-actions">
-          <button
-            className="ghost"
-            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-          >
-            {theme === 'dark' ? (
-              <Icon name="moon" color="#9fa8da" />
-            ) : (
-              <Icon name="sun" color="#f4c04d" />
-            )}
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </button>
+          <div className="pill-track">
+            <button
+              className={theme === 'dark' ? 'pill-btn active' : 'pill-btn'}
+              onClick={() => setTheme('dark')}
+            >
+              <Icon name="moon" />
+              Dark
+            </button>
+            <button
+              className={theme === 'light' ? 'pill-btn active' : 'pill-btn'}
+              onClick={() => setTheme('light')}
+            >
+              <Icon name="sun" />
+              Light
+            </button>
+          </div>
           <button className="ghost" onClick={() => setShowChangelog(true)}>
             <Icon name="star" filled color="#c9a9ff" />
             What's new
@@ -913,7 +929,7 @@ export default function App() {
       >
         <section className="pane editor-pane">
           <div className="pane-head">
-            <span className="pane-title">SVG code</span>
+            <span className="pane-title"><span className="dot" />SVG code</span>
             <div className="pane-tools">
               <button className="ghost" onClick={formatCode}>
                 <Icon name="formatIcon" />
@@ -1066,11 +1082,11 @@ export default function App() {
 
             <span className="tb-divider" />
 
-            <div className="tb-group seg">
+            <div className="tb-group pill-track tb-bg">
               {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
                 <button
                   key={bg}
-                  className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
+                  className={previewBg === bg ? 'pill-btn active' : 'pill-btn'}
                   onClick={() => setPreviewBg(bg)}
                   title={`${bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'} background`}
                 >
@@ -1107,6 +1123,7 @@ export default function App() {
             ref={previewContainerRef}
             onDoubleClick={resetPreviewView}
           >
+            {previewUrl && <div className="preview-halo" aria-hidden="true" />}
             {previewUrl ? (
               <img
                 src={previewUrl}
@@ -1181,7 +1198,7 @@ export default function App() {
 
         <aside className="pane controls-pane">
           <div className="pane-head">
-            <span className="pane-title">Export</span>
+            <span className="pane-title pink"><span className="dot" />Export</span>
           </div>
           <div className="controls">
             <div className="field">
