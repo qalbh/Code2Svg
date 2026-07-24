@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.25.1',
+    date: '2026-07-24',
+    changes: [
+      'The divider between the code and preview panes now shows a grip handle so it is clearly draggable.',
+    ],
+  },
+  {
     version: '1.25.0',
     date: '2026-07-24',
     changes: [

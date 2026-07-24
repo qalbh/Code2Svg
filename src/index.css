@@ -472,13 +472,35 @@ button {
 
 .pane-resizer {
   align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   cursor: col-resize;
   transition: background 0.15s;
 }
 
+/* A dotted grip so it reads as a draggable handle even before hover. */
+.pane-resizer::before {
+  content: '';
+  width: 4px;
+  height: 40px;
+  border-radius: 4px;
+  background-image: radial-gradient(circle at center, var(--muted) 1px, transparent 1.5px);
+  background-size: 4px 5px;
+  background-repeat: repeat-y;
+  background-position: center;
+  opacity: 0.6;
+  transition: opacity 0.15s, background-image 0.15s;
+}
+
 .pane-resizer:hover {
   background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.pane-resizer:hover::before {
+  opacity: 1;
+  background-image: radial-gradient(circle at center, var(--text) 1px, transparent 1.5px);
 }
 
 .pane {
