@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.1',
+    date: '2026-07-24',
+    changes: [
+      'Redesigned recolor swaps as an always-visible swatch bar under the preview, showing color codes directly instead of a button + popup.',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-07-24',
     changes: [

@@ -93,7 +93,6 @@ export default function App() {
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [showChangelog, setShowChangelog] = useState(false)
-  const [showRecolor, setShowRecolor] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
@@ -371,50 +370,11 @@ export default function App() {
         </div>
       )}
 
-      {showRecolor && (
-        <div className="modal-overlay" onClick={() => setShowRecolor(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <span className="pane-title">Recolor</span>
-              <button className="ghost" onClick={() => setShowRecolor(false)}>Close</button>
-            </div>
-            <div className="modal-body">
-              {colorSwatches.length === 0 ? (
-                <p className="hint">No fill, stroke, or gradient colors found in this SVG.</p>
-              ) : (
-                colorSwatches.map(({ value, hex }) => (
-                  <div className="color-row" key={value}>
-                    <input
-                      type="color"
-                      value={hex}
-                      onChange={(e) => updateColor(value, e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      defaultValue={value}
-                      spellCheck={false}
-                      onBlur={(e) => {
-                        const next = e.target.value.trim()
-                        if (next && next !== value) updateColor(value, next)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') e.currentTarget.blur()
-                      }}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <main className="workspace">
         <section className="pane editor-pane">
           <div className="pane-head">
             <span className="pane-title">SVG code</span>
             <div className="pane-tools">
-              <button className="ghost" onClick={() => setShowRecolor(true)}>Recolor</button>
               <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
               <button className="ghost" onClick={copyCode}>Copy</button>
               <input
@@ -452,6 +412,20 @@ export default function App() {
               ))}
             </div>
           </div>
+          {colorSwatches.length > 0 && (
+            <div className="color-swatch-bar">
+              {colorSwatches.map(({ value, hex }) => (
+                <label className="swatch-chip" key={value} title={value}>
+                  <input
+                    type="color"
+                    value={hex}
+                    onChange={(e) => updateColor(value, e.target.value)}
+                  />
+                  <span>{value}</span>
+                </label>
+              ))}
+            </div>
+          )}
           <div className={`preview-canvas bg-${previewBg}`}>
             {previewUrl ? (
               <img src={previewUrl} alt="SVG preview" />
