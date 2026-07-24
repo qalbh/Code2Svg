@@ -1123,7 +1123,6 @@ export default function App() {
             ref={previewContainerRef}
             onDoubleClick={resetPreviewView}
           >
-            {previewUrl && <div className="preview-halo" aria-hidden="true" />}
             {previewUrl ? (
               <img
                 src={previewUrl}

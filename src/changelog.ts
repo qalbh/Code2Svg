@@ -10,7 +10,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-07-24',
     changes: [
       'Redesigned interface — the whole app now sits on floating glassmorphic panels over an animated aurora backdrop, with a glowing app logo, accent status dots on the panel headers, and a shimmering Download button.',
-      'New segmented Dark / Light theme switch in the header, and a soft halo glow behind the preview artwork.',
+      'New segmented Dark / Light theme switch in the header.',
     ],
   },
   {

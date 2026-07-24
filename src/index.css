@@ -48,7 +48,6 @@
   --pill-active: rgba(255, 255, 255, 0.1);
   --pill-active-text: #f0f0f3;
 
-  --halo: radial-gradient(circle at 50% 44%, rgba(124, 120, 255, 0.4), rgba(236, 72, 153, 0.16) 46%, transparent 70%);
   --checker-base: rgba(12, 13, 17, 0.55);
   --checker-line: rgba(255, 255, 255, 0.045);
   --bg-light: #f4f4f5;
@@ -100,7 +99,6 @@
   --pill-active: #ffffff;
   --pill-active-text: #24242c;
 
-  --halo: radial-gradient(circle at 50% 44%, rgba(124, 120, 255, 0.22), rgba(236, 72, 153, 0.1) 46%, transparent 70%);
   --checker-base: #edecf2;
   --checker-line: rgba(24, 22, 50, 0.06);
   --bg-light: #f4f4f5;
@@ -163,11 +161,6 @@ body {
 @keyframes glowPulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 0.85; }
-}
-
-@keyframes halo {
-  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.07); }
 }
 
 @keyframes shimmer {
@@ -782,20 +775,6 @@ button {
   overflow: hidden;
   padding: 44px;
   touch-action: none;
-}
-
-.preview-halo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 540px;
-  height: 540px;
-  transform: translate(-50%, -50%);
-  background: var(--halo);
-  filter: blur(34px);
-  animation: halo 8s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .preview-canvas img {
