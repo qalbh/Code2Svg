@@ -8,8 +8,11 @@ Guidance for Claude Code (and other AI assistants) when working in this reposito
 upload SVG markup, preview it live (with zoom/pan, rotate/flip, and background
 backdrops), and export it as **PNG**, **JPG**, **WebP**, raw **SVG**, or an
 animated **GIF**. A bottom "Output" drawer also shows the SVG as **React**,
-**React Native**, or a **Data URI**. All processing happens client-side in a
-`<canvas>` / `DOMParser`; nothing is ever uploaded to a server.
+**React Native**, or a **Data URI**. An **Optimize** button runs SVGO minification
+alongside the non-destructive **Format** (pretty-print) button. The footer links to
+in-app **About**, **Terms & Conditions**, and **Privacy Policy** pages. All
+processing happens client-side in a `<canvas>` / `DOMParser`; nothing is ever
+uploaded to a server.
 
 ## Tech stack
 
@@ -18,7 +21,10 @@ animated **GIF**. A bottom "Output" drawer also shows the SVG as **React**,
 - **CodeMirror** (`@uiw/react-codemirror`, `@codemirror/lang-xml`,
   `@codemirror/lint`, `@uiw/codemirror-theme-tokyo-night`) — the SVG editor, its
   inline XML linter, and the read-only syntax-highlighted output drawer
-- **gifenc** — the only encoder dependency, used for animated-GIF export
+- **gifenc** — encoder dependency used for animated-GIF export
+- **svgo** — SVG minification for the Optimize button. Imported from **`svgo/browser`**
+  (not the package's default `.` entry), which is a pure-browser build with no Node
+  built-ins (`fs`, `path`, etc.) — importing the default entry breaks the Vite bundle.
 - No backend, no router, no state library — plain React `useState`/`useEffect`
 
 ## Commands
@@ -45,10 +51,12 @@ vite.config.ts        # just @vitejs/plugin-react
 public/favicon.svg    # app icon
 src/
   main.tsx            # React root (StrictMode)
-  App.tsx             # ~1200 lines: the ENTIRE UI + all React state
+  App.tsx             # ~1300 lines: the ENTIRE UI + all React state
   svgToImage.ts       # raster/SVG export, dimensions, colors, prettify, XML errors
   svgToGif.ts         # animated SVG → GIF encoding
   svgToCode.ts        # SVG → React / React Native / Data URI code generation
+  optimizeSvg.ts      # SVGO minification: options, plugin metadata, optimizeSvg()
+  infoPages.ts        # static copy for the About / Terms / Privacy footer modals
   changelog.ts        # in-app "What's new" changelog data (see workflow below)
   index.css           # all styling (CSS variables, light + dark themes)
   gifenc.d.ts         # local type declarations for gifenc (no bundled types)
@@ -71,6 +79,12 @@ APIs (`DOMParser`, `canvas`, `Image`, `btoa`/`TextEncoder`) but hold no React st
   `renderToGif(code, options)` records frames and encodes a GIF.
 - **`svgToCode.ts`** — `toDataUri`, `toReact`, `toReactNative`. Pure string
   generation via `DOMParser`.
+- **`optimizeSvg.ts`** — `optimizeSvg(code, options)` runs SVGO's `preset-default`
+  with per-plugin overrides, `multipass: true`, and `js2svg` pretty-printing. Also
+  exports `DEFAULT_OPTIMIZE_OPTIONS` and `PLUGIN_GROUPS` (labels/hints/grouping for
+  the settings popover) — all SVGO-specific knowledge lives here, not in `App.tsx`.
+- **`infoPages.ts`** — static `INFO_PAGES` array (id/label/title/sections) rendered
+  by a single generic modal in `App.tsx`, keyed off `infoPageId` state.
 
 ## How image conversion works (`svgToImage.ts`)
 
@@ -111,6 +125,16 @@ These were each found the hard way (often via decode-and-verify testing). Don't
   controls and clipping.
 - **Rotate/flip carry through to the export**, not just the preview — the same
   transform is applied in `renderToBlob` (canvas for raster, group-wrapper for SVG).
+- **SVGO preset-default plugin membership:** only some plugins are actually part of
+  `preset-default` (verify against the installed version's `plugins/preset-default.js`
+  before assuming). Passing a `preset-default` override for a plugin that isn't a
+  member (e.g. `removeViewBox`, `removeDimensions`, `removeTitle` in this SVGO
+  version) doesn't error — it silently logs a console warning and is ignored.
+  `optimizeSvg.ts` splits toggles into `PRESET_PLUGINS` (passed via `overrides`) and
+  `STANDALONE_PLUGINS` (added as their own `plugins` array entries, only when
+  enabled). Keep this split in sync if SVGO is upgraded.
+- **`removeViewBox` defaults off:** the app relies on `viewBox` for scaling in the
+  preview and raster export sizing — never flip its default to enabled.
 
 ## Conventions
 
@@ -119,9 +143,12 @@ These were each found the hard way (often via decode-and-verify testing). Don't
 - **No semicolons; single quotes; 2-space indent** (match existing files).
 - Keep it dependency-light. Prefer platform APIs (`DOMParser`, `canvas`, `Blob`,
   `URL.createObjectURL`, `TextEncoder`/`btoa`) over new libraries. New dependencies
-  are a deliberate, justified decision (only `gifenc` has been added, for GIF).
+  are a deliberate, justified decision — only `gifenc` (GIF encoding) and `svgo`
+  (Optimize/minify) have been added.
 - Reuse existing patterns: the clipboard-copy + `setStatus` message pattern, the
-  segmented-control (`.seg`/`.seg-btn`) and icon-button (`.icon-btn`) styles.
+  segmented-control (`.seg`/`.seg-btn`) and icon-button (`.icon-btn`) styles, the
+  `.modal-overlay`/`.modal` structure (changelog, About/Terms/Privacy all share it),
+  and localStorage-persisted settings (theme, Optimize plugin options).
 - All styling lives in `src/index.css` using the CSS variables in `:root` (and the
   `:root[data-theme='light']` overrides). No CSS-in-JS or utility framework. The
   app supports light + dark themes — style both.
