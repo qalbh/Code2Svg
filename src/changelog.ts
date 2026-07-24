@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.21.1',
+    date: '2026-07-24',
+    changes: [
+      'Image → SVG: added hover info tooltips explaining each tracing option, laid the how-to FAQ out in a single row, and matched the footer links to the rest of the app.',
+    ],
+  },
+  {
     version: '1.21.0',
     date: '2026-07-24',
     changes: [

@@ -5,12 +5,22 @@ import { code2svgDarkTheme, code2svgLightTheme } from './editorTheme'
 import { NavBar, useTheme } from './NavBar'
 import { Icon } from './Icon'
 import { formatFileSize } from './svgToImage'
+import { INFO_PAGES, type InfoPage } from './infoPages'
 import {
   DEFAULT_TRACE_OPTIONS,
   fileToImageData,
   traceImageData,
   type TraceOptions,
 } from './imageToSvg'
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="info-tip" tabIndex={0} role="img" aria-label={text}>
+      <Icon name="info" />
+      <span className="info-tip-bubble" role="tooltip">{text}</span>
+    </span>
+  )
+}
 
 const ACCEPTED = /^image\/(png|jpeg)$/
 const ACCEPTED_EXT = /\.(png|jpe?g)$/i
@@ -51,6 +61,7 @@ export default function ImageToSvg() {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [infoPageId, setInfoPageId] = useState<InfoPage['id'] | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragCounter = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -272,9 +283,10 @@ export default function ImageToSvg() {
             )}
 
             <div className="field">
-              <label>
-                Number of colors <span className="muted">{options.numberOfColors}</span>
-              </label>
+              <div className="field-head">
+                <label>Number of colors <span className="muted">{options.numberOfColors}</span></label>
+                <InfoTip text="How many distinct colors the image is reduced to before tracing. More colors capture finer shading but produce a larger SVG." />
+              </div>
               <input
                 type="range"
                 min={2}
@@ -287,9 +299,10 @@ export default function ImageToSvg() {
             </div>
 
             <div className="field">
-              <label>
-                Detail <span className="muted">{options.detail}</span>
-              </label>
+              <div className="field-head">
+                <label>Detail <span className="muted">{options.detail}</span></label>
+                <InfoTip text="How closely the traced paths follow the image's edges. Higher keeps small shapes and fine detail; lower simplifies them away." />
+              </div>
               <input
                 type="range"
                 min={0}
@@ -302,9 +315,10 @@ export default function ImageToSvg() {
             </div>
 
             <div className="field">
-              <label>
-                Smoothing <span className="muted">{options.smoothing}</span>
-              </label>
+              <div className="field-head">
+                <label>Smoothing <span className="muted">{options.smoothing}</span></label>
+                <InfoTip text="How much the traced outlines are rounded and simplified. Higher gives smoother curves with fewer points; lower stays crisp and angular." />
+              </div>
               <input
                 type="range"
                 min={0}
@@ -410,9 +424,39 @@ export default function ImageToSvg() {
           Runs entirely in your browser — nothing is uploaded.
         </span>
         <nav className="footer-links">
-          <a className="link-btn" href="/">SVG → Image</a>
+          {INFO_PAGES.map((p) => (
+            <button key={p.id} className="link-btn" onClick={() => setInfoPageId(p.id)}>
+              {p.label}
+            </button>
+          ))}
         </nav>
       </footer>
+
+      {infoPageId && (() => {
+        const infoPage = INFO_PAGES.find((p) => p.id === infoPageId)
+        if (!infoPage) return null
+        return (
+          <div className="modal-overlay" onClick={() => setInfoPageId(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-head">
+                <span className="pane-title">{infoPage.title}</span>
+                <button className="ghost" onClick={() => setInfoPageId(null)}>Close</button>
+              </div>
+              <div className="modal-body">
+                <p className="hint">Last updated {infoPage.updated}</p>
+                {infoPage.sections.map((section, i) => (
+                  <div className="info-section" key={i}>
+                    {section.heading && <h3>{section.heading}</h3>}
+                    {section.paragraphs.map((para, j) => (
+                      <p key={j}>{para}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
