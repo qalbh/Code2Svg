@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.0',
+    date: '2026-07-24',
+    changes: [
+      'Drag the divider between the code and preview panes to resize them; double-click it to reset to an even split.',
+    ],
+  },
+  {
     version: '1.12.0',
     date: '2026-07-24',
     changes: [

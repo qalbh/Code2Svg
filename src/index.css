@@ -130,10 +130,20 @@ button {
 .workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr 320px;
-  gap: 1px;
+  grid-template-columns: var(--editor-w, 1fr) 6px 1fr 320px;
+  gap: 0;
   background: var(--border);
   min-height: 0;
+}
+
+.pane-resizer {
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.15s;
+}
+
+.pane-resizer:hover {
+  background: var(--accent);
 }
 
 .pane {
@@ -278,6 +288,7 @@ button {
 /* Controls */
 .controls-pane {
   background: var(--panel);
+  border-left: 1px solid var(--border);
 }
 
 .controls {
@@ -631,5 +642,9 @@ input[type='range'] {
   }
   .controls-pane {
     overflow: visible;
+    border-left: none;
+  }
+  .pane-resizer {
+    display: none;
   }
 }

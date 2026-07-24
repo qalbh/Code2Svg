@@ -216,6 +216,33 @@ export default function App() {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const panDragRef = useRef<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null)
 
+  const [editorWidth, setEditorWidth] = useState<number | null>(null)
+  const workspaceRef = useRef<HTMLElement>(null)
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const workspace = workspaceRef.current
+    if (!workspace) return
+    const rect = workspace.getBoundingClientRect()
+    const CONTROLS_WIDTH = 320
+    const MIN_PANE = 220
+    const handleMove = (moveEvent: MouseEvent) => {
+      const max = rect.width - CONTROLS_WIDTH - MIN_PANE
+      const next = Math.max(MIN_PANE, Math.min(moveEvent.clientX - rect.left, max))
+      setEditorWidth(next)
+    }
+    const handleUp = () => {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+  }, [])
+
   const resetPreviewView = useCallback(() => {
     setPreview({ zoom: 1, pan: { x: 0, y: 0 } })
   }, [])
@@ -574,7 +601,11 @@ export default function App() {
         </div>
       )}
 
-      <main className="workspace">
+      <main
+        className="workspace"
+        ref={workspaceRef}
+        style={editorWidth != null ? ({ '--editor-w': `${editorWidth}px` } as React.CSSProperties) : undefined}
+      >
         <section className="pane editor-pane">
           <div className="pane-head">
             <span className="pane-title">SVG code</span>
@@ -601,6 +632,13 @@ export default function App() {
             basicSetup={{ lineNumbers: true, foldGutter: true }}
           />
         </section>
+
+        <div
+          className="pane-resizer"
+          onMouseDown={startResize}
+          onDoubleClick={() => setEditorWidth(null)}
+          title="Drag to resize · double-click to reset"
+        />
 
         <section className="pane preview-pane">
           <div className="pane-head">
