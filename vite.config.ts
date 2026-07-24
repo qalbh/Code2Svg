@@ -26,6 +26,12 @@ export default defineConfig({
       input: {
         main: 'index.html',
         imageToSvg: 'image-to-svg.html',
+        // Keyword-targeted landing pages (see src/conversions.ts). Add one line
+        // here for each new <slug>.html.
+        svgToPng: 'svg-to-png.html',
+        svgToJpg: 'svg-to-jpg.html',
+        svgToWebp: 'svg-to-webp.html',
+        pngToSvg: 'png-to-svg.html',
       },
     },
   },

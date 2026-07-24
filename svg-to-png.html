@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVG to PNG Converter — Convert SVG to PNG Online Free | Code2Svg</title>
+    <meta name="description" content="Convert SVG to PNG online for free. Paste SVG code or upload a file, set an exact size or scale, add a background, and download a crisp, transparent PNG — all in your browser." />
+    <link rel="canonical" href="%ORIGIN%/svg-to-png" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#060608" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e5e3ec" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Code2Svg" />
+    <meta property="og:title" content="SVG to PNG Converter — Convert SVG to PNG Online Free" />
+    <meta property="og:description" content="Convert SVG to PNG online for free. Paste SVG code or upload a file, set an exact size or scale, add a background, and download a crisp, transparent PNG — all in your browser." />
+    <meta property="og:url" content="%ORIGIN%/svg-to-png" />
+    <meta property="og:image" content="%ORIGIN%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SVG to PNG Converter — Convert SVG to PNG Online Free" />
+    <meta name="twitter:description" content="Convert SVG to PNG online for free — crisp, transparent PNGs rendered in your browser. Nothing is uploaded." />
+    <meta name="twitter:image" content="%ORIGIN%/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Code2Svg — SVG to PNG Converter",
+        "url": "%ORIGIN%/svg-to-png",
+        "description": "Free online SVG to PNG converter. Turn SVG code into a crisp, transparent PNG with exact resizing and a background option — entirely in your browser.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any (browser)",
+        "browserRequirements": "Requires JavaScript. Runs in any modern browser.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I convert an SVG to PNG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Paste your SVG code or upload an .svg file, leave the format on PNG, choose a size, and click Download PNG. The conversion happens instantly in your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the PNG keep a transparent background?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. PNG supports transparency, so unless you turn on a background color the exported PNG keeps the transparent areas of your SVG." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I export a high-resolution or retina PNG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Use the scale presets up to @4×, or switch to Custom size and enter an exact pixel width and height with an optional aspect-ratio lock." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my SVG uploaded to a server?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Code2Svg renders the PNG locally with the canvas API — your SVG code and the exported image never leave your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the SVG to PNG converter free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Completely free, with no account, no watermark, and no limits on how many files you convert." }
+          }
+        ]
+      }
+    </script>
+
+    <script>
+      (function () {
+        var stored = localStorage.getItem('code2svg-theme')
+        var theme = stored === 'light' || stored === 'dark'
+          ? stored
+          : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root" data-conversion="svg-to-png"></div>
+    <script type="module" src="/src/main-landing.tsx"></script>
+
+    <!-- Static, always-present content for search engines, social crawlers, and
+         visitors without JavaScript. The interactive converter renders above. -->
+    <section class="seo-content" aria-label="About this SVG to PNG converter">
+      <div class="seo-inner">
+        <h1>SVG to PNG Converter</h1>
+        <p class="seo-lead">
+          Convert SVG to PNG right in your browser — no uploads, no sign-up, no watermark. Paste your
+          SVG markup or drop in an <code>.svg</code> file and Code2Svg renders it to a pixel-perfect PNG
+          using the canvas API, so your artwork never leaves your device.
+        </p>
+        <p>
+          PNG keeps a transparent background by default, which makes it the go-to format for logos, icons,
+          and UI assets. Export at an exact width and height or scale up to 4× for retina screens, add a
+          solid background if you need one, and auto-crop the transparent padding before you download.
+        </p>
+
+        <h2>How to convert SVG to PNG in 3 steps</h2>
+        <ol class="seo-steps">
+          <li>Paste your SVG code into the editor, or upload / drag in an <code>.svg</code> file.</li>
+          <li>Keep the format on PNG and set the size — a scale factor (up to @4×) or exact pixel width and height.</li>
+          <li>Optionally add a background color or auto-crop to the artwork, then click <em>Download PNG</em> (or copy the PNG straight to your clipboard).</li>
+        </ol>
+
+        <h2>Frequently asked questions</h2>
+        <div class="seo-faq">
+          <div class="seo-faq-item">
+            <h3>How do I convert an SVG to PNG?</h3>
+            <p>Paste your SVG code or upload an .svg file, leave the format on PNG, choose a size, and click Download PNG. The conversion happens instantly in your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Does the PNG keep a transparent background?</h3>
+            <p>Yes. PNG supports transparency, so unless you turn on a background color the exported PNG keeps the transparent areas of your SVG.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Can I export a high-resolution or retina PNG?</h3>
+            <p>Yes. Use the scale presets up to @4×, or switch to Custom size and enter an exact pixel width and height with an optional aspect-ratio lock.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Is my SVG uploaded to a server?</h3>
+            <p>No. Code2Svg renders the PNG locally with the canvas API — your SVG code and the exported image never leave your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Is the SVG to PNG converter free?</h3>
+            <p>Completely free, with no account, no watermark, and no limits on how many files you convert.</p>
+          </div>
+        </div>
+
+        <nav class="seo-related" aria-label="Related converters">
+          <span class="seo-related-label">More converters</span>
+          <a href="/svg-to-jpg">SVG to JPG</a>
+          <a href="/svg-to-webp">SVG to WebP</a>
+          <a href="/png-to-svg">PNG to SVG</a>
+        </nav>
+
+        <footer class="seo-footer">
+          <nav class="seo-footer-nav" aria-label="Site">
+            <a href="/">SVG → Image</a>
+            <a href="/image-to-svg">Image → SVG</a>
+            <a href="/#privacy">Privacy Policy</a>
+            <a href="/#terms">Terms</a>
+            <a href="/#about">About</a>
+          </nav>
+          <p>Code2Svg — a free, private, browser-based SVG toolkit. Nothing you convert is uploaded.</p>
+        </footer>
+      </div>
+    </section>
+  </body>
+</html>

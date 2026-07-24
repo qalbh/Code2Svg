@@ -173,10 +173,10 @@ function CheckRow({ checked, onChange, label }: CheckRowProps) {
   )
 }
 
-export default function App() {
+export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFormat } = {}) {
   const [theme, setTheme] = useTheme()
   const [code, setCode] = useState(SAMPLE_SVG)
-  const [format, setFormat] = useState<ImageFormat>('png')
+  const [format, setFormat] = useState<ImageFormat>(defaultFormat)
   const [scale, setScale] = useState(2)
   const [sizeMode, setSizeMode] = useState<'scale' | 'custom'>('scale')
   const [customWidth, setCustomWidth] = useState(512)

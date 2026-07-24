@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.23.0',
+    date: '2026-07-24',
+    changes: [
+      'Added dedicated converter pages — SVG to PNG, SVG to JPG, SVG to WebP, and PNG to SVG — each its own URL with the tool pre-set to that conversion and its own search-friendly write-up and FAQ.',
+      'New "Popular conversions" links tie the pages together for quick switching.',
+    ],
+  },
+  {
     version: '1.22.0',
     date: '2026-07-24',
     changes: [

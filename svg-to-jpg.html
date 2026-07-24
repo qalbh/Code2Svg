@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVG to JPG Converter — Convert SVG to JPG Online Free | Code2Svg</title>
+    <meta name="description" content="Convert SVG to JPG online for free. Paste SVG code or upload a file, pick a size and quality, choose a background, and download a compact JPG image — entirely in your browser." />
+    <link rel="canonical" href="%ORIGIN%/svg-to-jpg" />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#060608" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e5e3ec" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Code2Svg" />
+    <meta property="og:title" content="SVG to JPG Converter — Convert SVG to JPG Online Free" />
+    <meta property="og:description" content="Convert SVG to JPG online for free. Paste SVG code or upload a file, pick a size and quality, choose a background, and download a compact JPG image — entirely in your browser." />
+    <meta property="og:url" content="%ORIGIN%/svg-to-jpg" />
+    <meta property="og:image" content="%ORIGIN%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SVG to JPG Converter — Convert SVG to JPG Online Free" />
+    <meta name="twitter:description" content="Convert SVG to JPG online for free — compact JPG images rendered in your browser. Nothing is uploaded." />
+    <meta name="twitter:image" content="%ORIGIN%/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Code2Svg — SVG to JPG Converter",
+        "url": "%ORIGIN%/svg-to-jpg",
+        "description": "Free online SVG to JPG converter. Turn SVG code into a compact JPG with an adjustable quality slider and background — entirely in your browser.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any (browser)",
+        "browserRequirements": "Requires JavaScript. Runs in any modern browser.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I convert an SVG to JPG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Paste your SVG or upload an .svg file, set the format to JPG, choose a size and quality, and click Download JPG. It all runs in your browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Why does my JPG have a white background?",
+            "acceptedAnswer": { "@type": "Answer", "text": "JPG cannot store transparency, so Code2Svg fills the transparent areas with a background color — white by default. You can pick any color in the Background option." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I control the JPG quality and file size?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. The Quality slider (10–100%) lets you trade image sharpness for a smaller file, and the estimated file size updates live as you adjust it." }
+          },
+          {
+            "@type": "Question",
+            "name": "Should I use JPG or PNG for my SVG?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Use PNG when you need transparency or crisp edges (logos, icons); use JPG for photographic content or when you need the smallest possible file and do not need transparency." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the SVG to JPG converter free and private?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is free with no watermark, and the conversion happens locally — nothing is uploaded to a server." }
+          }
+        ]
+      }
+    </script>
+
+    <script>
+      (function () {
+        var stored = localStorage.getItem('code2svg-theme')
+        var theme = stored === 'light' || stored === 'dark'
+          ? stored
+          : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root" data-conversion="svg-to-jpg"></div>
+    <script type="module" src="/src/main-landing.tsx"></script>
+
+    <!-- Static, always-present content for search engines, social crawlers, and
+         visitors without JavaScript. The interactive converter renders above. -->
+    <section class="seo-content" aria-label="About this SVG to JPG converter">
+      <div class="seo-inner">
+        <h1>SVG to JPG Converter</h1>
+        <p class="seo-lead">
+          Turn SVG into a JPG image in seconds, entirely in your browser. Paste your SVG or upload a file
+          and Code2Svg rasterizes it to a JPEG with an adjustable quality slider, so you can trade a little
+          sharpness for a much smaller file when you need it.
+        </p>
+        <p>
+          JPG has no transparency, so a background color is always applied (white by default) to avoid a
+          black fill — pick any color to match where the image will live. It is a great fit for photos,
+          social thumbnails, and email where a small, universally-supported raster wins over a vector.
+        </p>
+
+        <h2>How to convert SVG to JPG in 3 steps</h2>
+        <ol class="seo-steps">
+          <li>Paste your SVG code into the editor, or upload / drag in an <code>.svg</code> file.</li>
+          <li>Keep the format on JPG, set the size, and drag the <em>Quality</em> slider to balance sharpness against file size.</li>
+          <li>Choose a background color (JPG has no transparency), then click <em>Download JPG</em>.</li>
+        </ol>
+
+        <h2>Frequently asked questions</h2>
+        <div class="seo-faq">
+          <div class="seo-faq-item">
+            <h3>How do I convert an SVG to JPG?</h3>
+            <p>Paste your SVG or upload an .svg file, set the format to JPG, choose a size and quality, and click Download JPG. It all runs in your browser.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Why does my JPG have a white background?</h3>
+            <p>JPG cannot store transparency, so Code2Svg fills the transparent areas with a background color — white by default. You can pick any color in the Background option.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Can I control the JPG quality and file size?</h3>
+            <p>Yes. The Quality slider (10–100%) lets you trade image sharpness for a smaller file, and the estimated file size updates live as you adjust it.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Should I use JPG or PNG for my SVG?</h3>
+            <p>Use PNG when you need transparency or crisp edges (logos, icons); use JPG for photographic content or when you need the smallest possible file and do not need transparency.</p>
+          </div>
+          <div class="seo-faq-item">
+            <h3>Is the SVG to JPG converter free and private?</h3>
+            <p>Yes. It is free with no watermark, and the conversion happens locally — nothing is uploaded to a server.</p>
+          </div>
+        </div>
+
+        <nav class="seo-related" aria-label="Related converters">
+          <span class="seo-related-label">More converters</span>
+          <a href="/svg-to-png">SVG to PNG</a>
+          <a href="/svg-to-webp">SVG to WebP</a>
+          <a href="/png-to-svg">PNG to SVG</a>
+        </nav>
+
+        <footer class="seo-footer">
+          <nav class="seo-footer-nav" aria-label="Site">
+            <a href="/">SVG → Image</a>
+            <a href="/image-to-svg">Image → SVG</a>
+            <a href="/#privacy">Privacy Policy</a>
+            <a href="/#terms">Terms</a>
+            <a href="/#about">About</a>
+          </nav>
+          <p>Code2Svg — a free, private, browser-based SVG toolkit. Nothing you convert is uploaded.</p>
+        </footer>
+      </div>
+    </section>
+  </body>
+</html>
