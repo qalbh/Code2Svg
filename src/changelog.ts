@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.0',
+    date: '2026-07-24',
+    changes: [
+      'New consolidated preview toolbar — icon buttons for zoom, fit, and fullscreen (view only), plus rotate 90° left/right, flip horizontal/vertical, and reset that carry through to the exported PNG/JPG/WebP/SVG.',
+      'Detected colors moved into a compact palette popover to keep the toolbar tidy.',
+    ],
+  },
+  {
     version: '1.14.0',
     date: '2026-07-24',
     changes: [

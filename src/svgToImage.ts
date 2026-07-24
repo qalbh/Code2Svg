@@ -1,5 +1,7 @@
 export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'svg'
 
+export type Rotation = 0 | 90 | 180 | 270
+
 export interface RenderOptions {
   format: ImageFormat
   scale: number
@@ -8,6 +10,9 @@ export interface RenderOptions {
   background: string | null
   quality: number
   trim?: boolean
+  rotation?: Rotation
+  flipH?: boolean
+  flipV?: boolean
 }
 
 export interface RenderResult {
@@ -279,12 +284,56 @@ function findContentBounds(ctx: CanvasRenderingContext2D, width: number, height:
   return { x: left, y: top, width: right - left + 1, height: bottom - top + 1 }
 }
 
+function normalizeRotation(rotation?: Rotation): Rotation {
+  return ((((rotation ?? 0) % 360) + 360) % 360) as Rotation
+}
+
+function hasTransform(options: RenderOptions): boolean {
+  return normalizeRotation(options.rotation) !== 0 || Boolean(options.flipH) || Boolean(options.flipV)
+}
+
+// Wrap the original SVG in an outer <svg> whose group transform reproduces the
+// same center-based rotate/flip used for the raster path, so the vector export
+// carries the transform too. Output width/height swap for 90°/270°.
+function buildTransformedSvg(code: string, width: number, height: number, options: RenderOptions): string {
+  const rotation = normalizeRotation(options.rotation)
+  const swap = rotation === 90 || rotation === 270
+  const outW = swap ? height : width
+  const outH = swap ? width : height
+  const sx = options.flipH ? -1 : 1
+  const sy = options.flipV ? -1 : 1
+  const transform =
+    `translate(${outW / 2} ${outH / 2}) rotate(${rotation}) ` +
+    `scale(${sx} ${sy}) translate(${-width / 2} ${-height / 2})`
+
+  // Give the nested copy an explicit size so it renders at width×height even if
+  // the original relied on viewBox alone.
+  const inner = new DOMParser().parseFromString(code, 'image/svg+xml').querySelector('svg')!
+  inner.setAttribute('width', String(width))
+  inner.setAttribute('height', String(height))
+  const innerStr = new XMLSerializer().serializeToString(inner)
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" ` +
+    `viewBox="0 0 ${outW} ${outH}"><g transform="${transform}">${innerStr}</g></svg>`
+  )
+}
+
 export async function renderToBlob(code: string, options: RenderOptions): Promise<RenderResult> {
   const svg = parseSvg(code)
 
   if (options.format === 'svg') {
     const { width, height } = intrinsicSize(svg)
-    return { blob: new Blob([code], { type: MIME.svg }), width, height }
+    if (!hasTransform(options)) {
+      return { blob: new Blob([code], { type: MIME.svg }), width, height }
+    }
+    const swap = normalizeRotation(options.rotation) === 90 || normalizeRotation(options.rotation) === 270
+    const transformed = buildTransformedSvg(code, width, height, options)
+    return {
+      blob: new Blob([transformed], { type: MIME.svg }),
+      width: swap ? height : width,
+      height: swap ? width : height,
+    }
   }
 
   const { width, height } = intrinsicSize(svg)
@@ -332,9 +381,16 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
     }
   }
 
+  // Rotation of 90°/270° swaps the output canvas dimensions; flips and rotation
+  // are applied as a center-based transform matching the vector path above.
+  const rotation = normalizeRotation(options.rotation)
+  const swap = rotation === 90 || rotation === 270
+  const finalWidth = swap ? outHeight : outWidth
+  const finalHeight = swap ? outWidth : outHeight
+
   const finalCanvas = document.createElement('canvas')
-  finalCanvas.width = outWidth
-  finalCanvas.height = outHeight
+  finalCanvas.width = finalWidth
+  finalCanvas.height = finalHeight
   const finalCtx = finalCanvas.getContext('2d')
   if (!finalCtx) {
     throw new Error('Canvas is not supported in this browser.')
@@ -344,9 +400,15 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
   const background = options.background ?? (options.format === 'jpeg' ? '#ffffff' : null)
   if (background) {
     finalCtx.fillStyle = background
-    finalCtx.fillRect(0, 0, outWidth, outHeight)
+    finalCtx.fillRect(0, 0, finalWidth, finalHeight)
   }
-  finalCtx.drawImage(content, 0, 0)
+
+  finalCtx.save()
+  finalCtx.translate(finalWidth / 2, finalHeight / 2)
+  finalCtx.rotate((rotation * Math.PI) / 180)
+  finalCtx.scale(options.flipH ? -1 : 1, options.flipV ? -1 : 1)
+  finalCtx.drawImage(content, -outWidth / 2, -outHeight / 2, outWidth, outHeight)
+  finalCtx.restore()
 
   const blob = await new Promise<Blob | null>((resolve) =>
     finalCanvas.toBlob(resolve, MIME[options.format], options.quality),
@@ -354,5 +416,5 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
   if (!blob) {
     throw new Error('Failed to encode the image.')
   }
-  return { blob, width: outWidth, height: outHeight }
+  return { blob, width: finalWidth, height: finalHeight }
 }

@@ -14,6 +14,7 @@ import {
   renderToBlob,
   replaceColor,
   type ImageFormat,
+  type Rotation,
 } from './svgToImage'
 import { hasAnimation, renderToGif } from './svgToGif'
 import { CHANGELOG } from './changelog'
@@ -62,6 +63,41 @@ const xmlLinter = linter((view): Diagnostic[] => {
 
 type PreviewBg = 'checker' | 'white' | 'black'
 type AppTheme = 'dark' | 'light'
+
+// Inline stroke icons (24-grid, currentColor) — keeps the app dependency-light.
+const ICON_PATHS: Record<string, string> = {
+  zoomOut: 'M11 11m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M21 21l-4.35-4.35 M8 11h6',
+  zoomIn: 'M11 11m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M21 21l-4.35-4.35 M8 11h6 M11 8v6',
+  fit: 'M4 9V5a1 1 0 0 1 1-1h4 M20 9V5a1 1 0 0 0-1-1h-4 M4 15v4a1 1 0 0 0 1 1h4 M20 15v4a1 1 0 0 1-1 1h-4',
+  fullscreen: 'M8 3H5a2 2 0 0 0-2 2v3 M16 3h3a2 2 0 0 1 2 2v3 M8 21H5a2 2 0 0 1-2-2v-3 M16 21h3a2 2 0 0 0 2-2v-3',
+  rotateLeft: 'M4 12a8 8 0 1 0 2.34-5.66 M3 4v4h4',
+  rotateRight: 'M20 12a8 8 0 1 1-2.34-5.66 M21 4v4h-4',
+  flipH: 'M12 2v20 M8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3 M16 6h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3',
+  flipV: 'M2 12h20 M6 8V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3 M6 16v3a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3',
+  resetTransform: 'M9 14L4 9l5-5 M4 9h11a4 4 0 0 1 0 8h-1',
+  palette:
+    'M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 2.45-3 2.5 2.5 0 0 1 2.45-3H20a2 2 0 0 0 2-2 9 9 0 0 0-10-8z M7.5 10.5h.01 M12 7.5h.01 M16.5 10.5h.01',
+}
+
+function Icon({ name }: { name: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {ICON_PATHS[name].split(' M').map((seg, i) => (
+        <path key={i} d={i === 0 ? seg : `M${seg}`} />
+      ))}
+    </svg>
+  )
+}
 
 function getInitialTheme(): AppTheme {
   const stored = localStorage.getItem('code2svg-theme')
@@ -185,7 +221,27 @@ export default function App() {
   const [preview, setPreview] = useState({ zoom: 1, pan: { x: 0, y: 0 } })
   const [isPanning, setIsPanning] = useState(false)
   const previewContainerRef = useRef<HTMLDivElement>(null)
+  const previewPaneRef = useRef<HTMLElement>(null)
   const panDragRef = useRef<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null)
+
+  // Export transform (rotate/flip) — applied to the downloaded image, not just preview.
+  const [rotation, setRotation] = useState<Rotation>(0)
+  const [flipH, setFlipH] = useState(false)
+  const [flipV, setFlipV] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showPalette, setShowPalette] = useState(false)
+
+  const hasTransform = rotation !== 0 || flipH || flipV
+
+  const rotateBy = useCallback((deg: number) => {
+    setRotation((prev) => ((((prev + deg) % 360) + 360) % 360) as Rotation)
+  }, [])
+
+  const resetTransform = useCallback(() => {
+    setRotation(0)
+    setFlipH(false)
+    setFlipV(false)
+  }, [])
 
   const [editorWidth, setEditorWidth] = useState<number | null>(null)
   const workspaceRef = useRef<HTMLElement>(null)
@@ -216,6 +272,36 @@ export default function App() {
 
   const resetPreviewView = useCallback(() => {
     setPreview({ zoom: 1, pan: { x: 0, y: 0 } })
+  }, [])
+
+  const zoomBy = useCallback((factor: number) => {
+    setPreview((prev) => {
+      const nextZoom = Math.min(8, Math.max(0.1, prev.zoom * factor))
+      const ratio = nextZoom / prev.zoom
+      // Pan is measured from the pane centre, so scaling it by the zoom ratio
+      // keeps the centre point fixed as the zoom level changes.
+      return { zoom: nextZoom, pan: { x: prev.pan.x * ratio, y: prev.pan.y * ratio } }
+    })
+  }, [])
+
+  const resetZoom = useCallback(() => {
+    setPreview((prev) => ({ ...prev, zoom: 1 }))
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    const pane = previewPaneRef.current
+    if (!pane) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      pane.requestFullscreen?.()
+    }
+  }, [])
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === previewPaneRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
   useEffect(() => {
@@ -294,6 +380,9 @@ export default function App() {
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
         trim: format !== 'svg' && trimTransparent,
+        rotation,
+        flipH,
+        flipV,
       })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -313,7 +402,7 @@ export default function App() {
     } finally {
       setBusy(false)
     }
-  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV])
 
   const downloadGif = useCallback(async () => {
     if (!trimmed) {
@@ -365,6 +454,9 @@ export default function App() {
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
         trim: format !== 'svg' && trimTransparent,
+        rotation,
+        flipH,
+        flipV,
       })
         .then(({ blob }) => {
           if (!cancelled) setEstimatedSize(blob.size)
@@ -377,7 +469,7 @@ export default function App() {
       cancelled = true
       clearTimeout(id)
     }
-  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV])
 
   const copyImage = useCallback(async () => {
     if (!trimmed) {
@@ -399,6 +491,9 @@ export default function App() {
         quality,
         background: useBackground ? background : null,
         trim: trimTransparent,
+        rotation,
+        flipH,
+        flipV,
       })
       await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
       const sizeNote = trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
@@ -408,7 +503,7 @@ export default function App() {
     } finally {
       setBusy(false)
     }
-  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
+  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV])
 
   const handleWidthChange = useCallback((value: number) => {
     setCustomWidth(value)
@@ -494,14 +589,19 @@ export default function App() {
     loadFile(file)
   }, [loadFile])
 
+  const swapDims = rotation === 90 || rotation === 270
+  const fmtSize = (w: number, h: number, unit: string) => {
+    const [a, b] = swapDims ? [h, w] : [w, h]
+    return `${Math.round(a)} × ${Math.round(b)}${unit}`
+  }
   const outputSize = dimensions
     ? format === 'svg'
-      ? `${Math.round(dimensions.width)} × ${Math.round(dimensions.height)}`
+      ? fmtSize(dimensions.width, dimensions.height, '')
       : trimTransparent
         ? 'Trimmed to content'
         : sizeMode === 'custom'
-          ? `${Math.round(customWidth)} × ${Math.round(customHeight)} px`
-          : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
+          ? fmtSize(customWidth, customHeight, ' px')
+          : fmtSize(dimensions.width * scale, dimensions.height * scale, ' px')
     : '—'
 
   return (
@@ -611,38 +711,101 @@ export default function App() {
           title="Drag to resize · double-click to reset"
         />
 
-        <section className="pane preview-pane">
-          <div className="pane-head">
-            <span className="pane-title">Preview</span>
-            <div className="pane-tools">
-              {(preview.zoom !== 1 || preview.pan.x !== 0 || preview.pan.y !== 0) && (
-                <button className="ghost" onClick={resetPreviewView}>
-                  {Math.round(preview.zoom * 100)}% · Reset
-                </button>
-              )}
-              <div className="seg">
-                {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
-                  <button
-                    key={bg}
-                    className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
-                    onClick={() => setPreviewBg(bg)}
-                  >
-                    {bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'}
-                  </button>
-                ))}
-              </div>
+        <section className="pane preview-pane" ref={previewPaneRef}>
+          <div className="preview-toolbar">
+            <div className="tb-group">
+              <button className="icon-btn" onClick={() => zoomBy(1 / 1.2)} title="Zoom out">
+                <Icon name="zoomOut" />
+              </button>
+              <button className="icon-btn zoom-label" onClick={resetZoom} title="Reset zoom to 100%">
+                {Math.round(preview.zoom * 100)}%
+              </button>
+              <button className="icon-btn" onClick={() => zoomBy(1.2)} title="Zoom in">
+                <Icon name="zoomIn" />
+              </button>
+              <button className="icon-btn" onClick={resetPreviewView} title="Fit to screen">
+                <Icon name="fit" />
+              </button>
+              <button
+                className={isFullscreen ? 'icon-btn active' : 'icon-btn'}
+                onClick={toggleFullscreen}
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen preview'}
+              >
+                <Icon name="fullscreen" />
+              </button>
             </div>
-          </div>
-          {colorSwatches.length > 0 && (
-            <div className="color-swatch-bar">
-              {colorSwatches.map(({ value, hex }, index) => (
-                // Keyed by position, not value: the value changes continuously
-                // during a live drag, and keying on it would remount the input
-                // (and close the native picker) on every tick.
-                <ColorSwatch key={index} value={value} hex={hex} onCommit={updateColor} />
+
+            <span className="tb-divider" />
+
+            <div className="tb-group">
+              <button className="icon-btn" onClick={() => rotateBy(-90)} title="Rotate 90° left">
+                <Icon name="rotateLeft" />
+              </button>
+              <button className="icon-btn" onClick={() => rotateBy(90)} title="Rotate 90° right">
+                <Icon name="rotateRight" />
+              </button>
+              <button
+                className={flipH ? 'icon-btn active' : 'icon-btn'}
+                onClick={() => setFlipH((v) => !v)}
+                title="Flip horizontal"
+              >
+                <Icon name="flipH" />
+              </button>
+              <button
+                className={flipV ? 'icon-btn active' : 'icon-btn'}
+                onClick={() => setFlipV((v) => !v)}
+                title="Flip vertical"
+              >
+                <Icon name="flipV" />
+              </button>
+              <button
+                className="icon-btn"
+                onClick={resetTransform}
+                disabled={!hasTransform}
+                title="Reset transform"
+              >
+                <Icon name="resetTransform" />
+              </button>
+            </div>
+
+            <span className="tb-divider" />
+
+            <div className="tb-group seg">
+              {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
+                <button
+                  key={bg}
+                  className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
+                  onClick={() => setPreviewBg(bg)}
+                  title={`${bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'} background`}
+                >
+                  {bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'}
+                </button>
               ))}
             </div>
-          )}
+
+            {colorSwatches.length > 0 && (
+              <div className="tb-group tb-right">
+                <button
+                  className={showPalette ? 'icon-btn active' : 'icon-btn'}
+                  onClick={() => setShowPalette((v) => !v)}
+                  title="Recolor"
+                >
+                  <Icon name="palette" />
+                </button>
+                {showPalette && (
+                  <>
+                    <div className="popover-backdrop" onClick={() => setShowPalette(false)} />
+                    <div className="palette-popover">
+                      {colorSwatches.map(({ value, hex }, index) => (
+                        <ColorSwatch key={index} value={value} hex={hex} onCommit={updateColor} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           <div
             className={`preview-canvas bg-${previewBg}`}
             ref={previewContainerRef}
@@ -655,7 +818,9 @@ export default function App() {
                 draggable={false}
                 onMouseDown={handlePreviewPanStart}
                 style={{
-                  transform: `translate(${preview.pan.x}px, ${preview.pan.y}px) scale(${preview.zoom})`,
+                  transform:
+                    `translate(${preview.pan.x}px, ${preview.pan.y}px) scale(${preview.zoom}) ` +
+                    `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`,
                   cursor: isPanning ? 'grabbing' : 'grab',
                 }}
               />
@@ -814,6 +979,9 @@ export default function App() {
                 <span>Estimated file size</span>
                 <strong>{estimatedSize === null ? '—' : formatFileSize(estimatedSize)}</strong>
               </div>
+              {hasTransform && (
+                <div><span>Transform</span><strong className="tag-transformed">Transformed</strong></div>
+              )}
             </div>
 
             <button className="primary" onClick={download} disabled={busy || !trimmed}>

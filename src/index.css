@@ -198,13 +198,90 @@ button {
   min-height: 260px;
 }
 
-.color-swatch-bar {
+/* Preview toolbar */
+.preview-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 14px;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 12px;
+  min-height: 46px;
   border-bottom: 1px solid var(--border);
   background: var(--panel);
+}
+
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tb-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.tb-right {
+  position: relative;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 7px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.icon-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zoom-label {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.palette-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
 }
 
 .swatch-chip {
@@ -246,6 +323,14 @@ button {
 .swatch-chip span {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: nowrap;
+}
+
+.preview-pane:fullscreen {
+  background: var(--bg);
+}
+
+.preview-pane:fullscreen .preview-canvas {
+  padding: 40px;
 }
 
 .preview-canvas {
@@ -479,6 +564,15 @@ input[type='range'] {
 
 .summary strong {
   font-weight: 600;
+}
+
+.tag-transformed {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
 }
 
 /* Animated export */
