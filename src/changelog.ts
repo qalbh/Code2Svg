@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.9.0',
+    date: '2026-07-24',
+    changes: [
+      'Zoom and pan the preview — scroll to zoom toward your cursor, drag to pan, double-click or the zoom badge to reset. View-only; does not affect the exported image.',
+    ],
+  },
+  {
     version: '1.8.0',
     date: '2026-07-24',
     changes: [

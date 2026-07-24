@@ -203,6 +203,73 @@ export default function App() {
     return () => URL.revokeObjectURL(url)
   }, [trimmed])
 
+  const [preview, setPreview] = useState({ zoom: 1, pan: { x: 0, y: 0 } })
+  const [isPanning, setIsPanning] = useState(false)
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const panDragRef = useRef<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null)
+
+  const resetPreviewView = useCallback(() => {
+    setPreview({ zoom: 1, pan: { x: 0, y: 0 } })
+  }, [])
+
+  useEffect(() => {
+    const container = previewContainerRef.current
+    if (!container) return
+
+    // React's onWheel is bound as a passive listener, so e.preventDefault() inside
+    // it is silently ignored (and logs a warning) — attach natively as non-passive
+    // instead, which is required to stop the page/pane from scrolling while zooming.
+    const handleWheel = (e: WheelEvent) => {
+      if (!container.querySelector('img')) return
+      e.preventDefault()
+      const rect = container.getBoundingClientRect()
+      const cursorX = e.clientX - rect.left - rect.width / 2
+      const cursorY = e.clientY - rect.top - rect.height / 2
+
+      setPreview((prev) => {
+        const factor = Math.exp(-e.deltaY * 0.001)
+        const nextZoom = Math.min(8, Math.max(0.1, prev.zoom * factor))
+        // Keep the point under the cursor fixed as the zoom level changes.
+        const worldX = (cursorX - prev.pan.x) / prev.zoom
+        const worldY = (cursorY - prev.pan.y) / prev.zoom
+        return {
+          zoom: nextZoom,
+          pan: { x: cursorX - worldX * nextZoom, y: cursorY - worldY * nextZoom },
+        }
+      })
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [])
+
+  const handlePreviewPanStart = useCallback((e: React.MouseEvent) => {
+    if (!previewUrl) return
+    e.preventDefault()
+    panDragRef.current = { startX: e.clientX, startY: e.clientY, startPan: preview.pan }
+    setIsPanning(true)
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const drag = panDragRef.current
+      if (!drag) return
+      setPreview((prev) => ({
+        ...prev,
+        pan: {
+          x: drag.startPan.x + (moveEvent.clientX - drag.startX),
+          y: drag.startPan.y + (moveEvent.clientY - drag.startY),
+        },
+      }))
+    }
+    const handleMouseUp = () => {
+      panDragRef.current = null
+      setIsPanning(false)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [previewUrl, preview.pan])
+
   const supportsQuality = format === 'jpeg' || format === 'webp'
 
   const download = useCallback(async () => {
@@ -301,10 +368,11 @@ export default function App() {
     reader.onload = () => {
       setCode(String(reader.result ?? ''))
       setStatus({ kind: 'info', text: `Loaded ${file.name}.` })
+      resetPreviewView()
     }
     reader.onerror = () => setStatus({ kind: 'error', text: 'Could not read the file.' })
     reader.readAsText(file)
-  }, [])
+  }, [resetPreviewView])
 
   const onUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -390,8 +458,8 @@ export default function App() {
             {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
           </button>
           <button className="ghost" onClick={() => setShowChangelog(true)}>What's new</button>
-          <button className="ghost" onClick={() => setCode(SAMPLE_SVG)}>Load sample</button>
-          <button className="ghost" onClick={() => { setCode(''); setStatus(null) }}>Clear</button>
+          <button className="ghost" onClick={() => { setCode(SAMPLE_SVG); resetPreviewView() }}>Load sample</button>
+          <button className="ghost" onClick={() => { setCode(''); setStatus(null); resetPreviewView() }}>Clear</button>
         </div>
       </header>
 
@@ -451,16 +519,23 @@ export default function App() {
         <section className="pane preview-pane">
           <div className="pane-head">
             <span className="pane-title">Preview</span>
-            <div className="seg">
-              {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
-                <button
-                  key={bg}
-                  className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
-                  onClick={() => setPreviewBg(bg)}
-                >
-                  {bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'}
+            <div className="pane-tools">
+              {(preview.zoom !== 1 || preview.pan.x !== 0 || preview.pan.y !== 0) && (
+                <button className="ghost" onClick={resetPreviewView}>
+                  {Math.round(preview.zoom * 100)}% · Reset
                 </button>
-              ))}
+              )}
+              <div className="seg">
+                {(['checker', 'white', 'black'] as PreviewBg[]).map((bg) => (
+                  <button
+                    key={bg}
+                    className={previewBg === bg ? 'seg-btn active' : 'seg-btn'}
+                    onClick={() => setPreviewBg(bg)}
+                  >
+                    {bg === 'checker' ? 'Grid' : bg === 'white' ? 'Light' : 'Dark'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           {colorSwatches.length > 0 && (
@@ -473,9 +548,22 @@ export default function App() {
               ))}
             </div>
           )}
-          <div className={`preview-canvas bg-${previewBg}`}>
+          <div
+            className={`preview-canvas bg-${previewBg}`}
+            ref={previewContainerRef}
+            onDoubleClick={resetPreviewView}
+          >
             {previewUrl ? (
-              <img src={previewUrl} alt="SVG preview" />
+              <img
+                src={previewUrl}
+                alt="SVG preview"
+                draggable={false}
+                onMouseDown={handlePreviewPanStart}
+                style={{
+                  transform: `translate(${preview.pan.x}px, ${preview.pan.y}px) scale(${preview.zoom})`,
+                  cursor: isPanning ? 'grabbing' : 'grab',
+                }}
+              />
             ) : (
               <p className="empty">Your SVG preview will appear here.</p>
             )}
