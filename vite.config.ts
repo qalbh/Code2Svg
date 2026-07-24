@@ -36,6 +36,7 @@ export default defineConfig({
         svgToIco: 'svg-to-ico.html',
         svgToFavicon: 'svg-to-favicon.html',
         jpgToSvg: 'jpg-to-svg.html',
+        bulkSvgToPng: 'bulk-svg-to-png.html',
       },
     },
   },

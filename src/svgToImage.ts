@@ -1,4 +1,4 @@
-export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'svg' | 'pdf' | 'ico'
+export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'avif' | 'svg' | 'pdf' | 'ico'
 
 export type Rotation = 0 | 90 | 180 | 270
 
@@ -30,9 +30,32 @@ const MIME: Record<ImageFormat, string> = {
   png: 'image/png',
   jpeg: 'image/jpeg',
   webp: 'image/webp',
+  avif: 'image/avif',
   svg: 'image/svg+xml',
   pdf: 'application/pdf',
   ico: 'image/x-icon',
+}
+
+// AVIF encoding via canvas.toBlob is only available in some browsers. Probe once
+// by encoding a tiny canvas and checking the blob's actual type (browsers that
+// don't support it silently fall back to PNG).
+let avifSupport: Promise<boolean> | null = null
+export function canEncodeAvif(): Promise<boolean> {
+  if (avifSupport) return avifSupport
+  avifSupport = new Promise<boolean>((resolve) => {
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = 2
+      canvas.height = 2
+      canvas.toBlob(
+        (blob) => resolve(!!blob && blob.type === 'image/avif'),
+        'image/avif',
+      )
+    } catch {
+      resolve(false)
+    }
+  })
+  return avifSupport
 }
 
 export function fileExtension(format: ImageFormat): string {

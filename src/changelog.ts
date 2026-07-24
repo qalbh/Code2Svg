@@ -6,6 +6,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.25.0',
+    date: '2026-07-24',
+    changes: [
+      'Batch conversion — drop or select multiple files in either tool and convert them all at once, with a live per-file progress list and a single ZIP download. Works for every SVG → Image format and for Image → SVG tracing.',
+      'New AVIF export in the SVG → Image tool, shown automatically when your browser can encode it.',
+      'Added a Bulk SVG to PNG converter page.',
+    ],
+  },
+  {
     version: '1.24.0',
     date: '2026-07-24',
     changes: [

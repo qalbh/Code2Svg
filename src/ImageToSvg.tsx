@@ -5,6 +5,7 @@ import { code2svgDarkTheme, code2svgLightTheme } from './editorTheme'
 import { NavBar, useTheme } from './NavBar'
 import { Icon } from './Icon'
 import { formatFileSize } from './svgToImage'
+import { BatchModal } from './BatchModal'
 import { INFO_PAGES, type InfoPage } from './infoPages'
 import {
   DEFAULT_TRACE_OPTIONS,
@@ -44,8 +45,10 @@ export default function ImageToSvg() {
   const [copied, setCopied] = useState(false)
   const [infoPageId, setInfoPageId] = useState<InfoPage['id'] | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [batchFiles, setBatchFiles] = useState<File[] | null>(null)
   const dragCounter = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const batchInputRef = useRef<HTMLInputElement>(null)
 
   // Thumbnail object URL — created/revoked in one effect (StrictMode-safe).
   useEffect(() => {
@@ -151,9 +154,31 @@ export default function ImageToSvg() {
     e.preventDefault()
     dragCounter.current = 0
     setIsDragging(false)
-    const next = e.dataTransfer.files?.[0]
+    const files = Array.from(e.dataTransfer.files ?? [])
+    const images = files.filter((f) => ACCEPTED.test(f.type) || ACCEPTED_EXT.test(f.name))
+    // Multiple images → batch trace; a single image loads into the tracer.
+    if (images.length > 1) {
+      setBatchFiles(images)
+      return
+    }
+    const next = files[0]
     if (next) loadFile(next)
   }, [loadFile])
+
+  const onBatchPick = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length) setBatchFiles(files)
+    e.target.value = ''
+  }, [])
+
+  // Trace one image to an SVG blob — reused by the batch modal so multi-file
+  // tracing uses the same color/detail/smoothing settings as the live tool.
+  const convertBatchFile = useCallback(async (f: File): Promise<{ name: string; blob: Blob }> => {
+    const { imageData } = await fileToImageData(f)
+    const svgStr = traceImageData(imageData, options)
+    const base = f.name.replace(/\.(png|jpe?g|webp)$/i, '') || 'image'
+    return { name: `${base}.svg`, blob: new Blob([svgStr], { type: 'image/svg+xml' }) }
+  }, [options])
 
   const clearImage = useCallback(() => {
     setFile(null)
@@ -219,17 +244,37 @@ export default function ImageToSvg() {
 
       <NavBar theme={theme} setTheme={setTheme} active="image-to-svg" />
 
+      {batchFiles && (
+        <BatchModal
+          title="Batch trace to SVG"
+          files={batchFiles}
+          convert={convertBatchFile}
+          zipName="code2svg-svg.zip"
+          onClose={() => setBatchFiles(null)}
+        />
+      )}
+
       <main className="workspace i2s-workspace">
         {/* SOURCE + OPTIONS */}
         <section className="pane">
           <div className="pane-head">
             <span className="pane-title"><span className="dot" />Source</span>
-            {file && (
-              <button className="ghost" onClick={clearImage}>
-                <Icon name="trash" />
-                Remove
+            <div className="pane-tools">
+              <button
+                className="ghost"
+                onClick={() => batchInputRef.current?.click()}
+                title="Batch trace multiple images"
+              >
+                <Icon name="layers" />
+                Batch
               </button>
-            )}
+              {file && (
+                <button className="ghost" onClick={clearImage}>
+                  <Icon name="trash" />
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
           <div className="i2s-source">
             {sourceUrl ? (
@@ -254,6 +299,14 @@ export default function ImageToSvg() {
               accept="image/png,image/jpeg"
               hidden
               onChange={onUpload}
+            />
+            <input
+              ref={batchInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              multiple
+              hidden
+              onChange={onBatchPick}
             />
 
             {sourceUrl && (

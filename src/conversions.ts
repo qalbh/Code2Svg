@@ -359,4 +359,45 @@ export const CONVERSIONS: Conversion[] = [
       },
     ],
   },
+  {
+    slug: 'bulk-svg-to-png',
+    tool: 'svgToImage',
+    defaultFormat: 'png',
+    label: 'Bulk SVG to PNG',
+    title: 'Bulk SVG to PNG Converter — Convert Multiple SVGs at Once | Code2Svg',
+    description:
+      'Convert multiple SVG files to PNG at once, free. Drop or select many .svg files, convert them all with your chosen size and settings, and download a single ZIP — all in your browser.',
+    h1: 'Bulk SVG to PNG Converter',
+    intro: [
+      'Convert a whole batch of SVG files to PNG at once, right in your browser. Drop or select multiple .svg files and Code2Svg renders every one to PNG with the same size, scale, and background settings, then packs them into a single ZIP to download.',
+      'It is the fast way to export an icon set or a folder of graphics without converting them one by one. Everything runs locally — none of your files are uploaded — and the batch converter also works for JPG, WebP, PDF, and ICO output.',
+    ],
+    howto: [
+      'Click the batch (layers) button in the code toolbar, or drag several .svg files onto the page.',
+      'Pick your format (PNG) and size / background settings — they apply to every file.',
+      'Let the batch finish, then click Download ZIP to save all the PNGs at once.',
+    ],
+    faq: [
+      {
+        q: 'How do I convert multiple SVGs to PNG at once?',
+        a: 'Click the batch button in the toolbar (or drag several .svg files onto the page), choose PNG and your settings, and download the results as a single ZIP. It all runs in your browser.',
+      },
+      {
+        q: 'Do all the files use the same size and settings?',
+        a: 'Yes. The format, scale or size, background, and trim settings you pick are applied to every file in the batch.',
+      },
+      {
+        q: 'Can I batch convert to formats other than PNG?',
+        a: 'Yes. The same batch converter works for JPG, WebP, AVIF (where supported), PDF, and ICO — just pick the format before you run it.',
+      },
+      {
+        q: 'Is there a limit on how many files I can convert?',
+        a: 'There is no fixed limit. Files are processed one at a time in your browser, so very large batches simply take a little longer.',
+      },
+      {
+        q: 'Are my files uploaded anywhere?',
+        a: 'No. Every file is converted locally in your browser and zipped on your device — nothing is uploaded to a server.',
+      },
+    ],
+  },
 ]

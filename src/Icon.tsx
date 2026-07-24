@@ -34,6 +34,7 @@ export const ICON_PATHS: Record<string, string> = {
   code: 'M16 18 22 12 16 6 M8 6 2 12 8 18',
   wand: 'M15 4V2 M15 22v-2 M19 6h2 M3 6h2 M4.5 19.5 15 9 M13.5 7.5l3 3',
   arrowRight: 'M5 12h14 M13 6l6 6-6 6',
+  layers: 'M12 2 2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5',
 }
 
 export function Icon({ name, filled, color }: { name: string; filled?: boolean; color?: string }) {

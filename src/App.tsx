@@ -6,6 +6,7 @@ import { code2svgDarkTheme, code2svgLightTheme } from './editorTheme'
 import { NavBar, useTheme } from './NavBar'
 import { Icon } from './Icon'
 import {
+  canEncodeAvif,
   fileExtension,
   findColors,
   findXmlError,
@@ -18,6 +19,7 @@ import {
   type ImageFormat,
   type Rotation,
 } from './svgToImage'
+import { BatchModal } from './BatchModal'
 import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
 import { renderToPdf } from './svgToPdf'
@@ -44,6 +46,7 @@ const FORMATS: { id: ImageFormat; label: string }[] = [
   { id: 'png', label: 'PNG' },
   { id: 'jpeg', label: 'JPG' },
   { id: 'webp', label: 'WebP' },
+  { id: 'avif', label: 'AVIF' },
   { id: 'svg', label: 'SVG' },
   { id: 'pdf', label: 'PDF' },
   { id: 'ico', label: 'ICO' },
@@ -208,12 +211,35 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
   const [downloaded, flashDownloaded] = useFlash()
   const [imageCopied, flashImageCopied] = useFlash()
   const [faviconDone, flashFaviconDone] = useFlash()
+  const [avifSupported, setAvifSupported] = useState(false)
+  const [batchFiles, setBatchFiles] = useState<File[] | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const batchInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
   useEffect(() => {
     localStorage.setItem(OPTIMIZE_OPTIONS_KEY, JSON.stringify(optimizeOptions))
   }, [optimizeOptions])
+
+  useEffect(() => {
+    let active = true
+    canEncodeAvif().then((ok) => {
+      if (active) setAvifSupported(ok)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // Hide AVIF unless the browser can actually encode it (Safari/Chrome do; some
+  // don't). If the current selection becomes unavailable it falls back to PNG.
+  const availableFormats = useMemo(
+    () => FORMATS.filter((f) => f.id !== 'avif' || avifSupported),
+    [avifSupported],
+  )
+  useEffect(() => {
+    if (format === 'avif' && !avifSupported) setFormat('png')
+  }, [format, avifSupported])
 
   const trimmed = code.trim()
 
@@ -433,11 +459,11 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
     window.addEventListener('mouseup', handleMouseUp)
   }, [previewUrl, preview.pan])
 
-  const supportsQuality = format === 'jpeg' || format === 'webp'
+  const supportsQuality = format === 'jpeg' || format === 'webp' || format === 'avif'
   // Raster formats go through the canvas encoder; PDF (vector) and ICO
   // (fixed-size favicon) are assembled by their own modules and don't expose the
   // size / quality / background / trim controls.
-  const isRaster = format === 'png' || format === 'jpeg' || format === 'webp'
+  const isRaster = format === 'png' || format === 'jpeg' || format === 'webp' || format === 'avif'
 
   const triggerDownload = useCallback((blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob)
@@ -516,6 +542,34 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
       setBusy(false)
     }
   }, [trimmed, triggerDownload, flashFaviconDone])
+
+  // Convert one SVG file to the current export format — reused by the batch modal
+  // so multi-file export honours all the same settings as a single download.
+  const convertBatchFile = useCallback(async (file: File): Promise<{ name: string; blob: Blob }> => {
+    const text = await file.text()
+    const base = file.name.replace(/\.svg$/i, '') || 'image'
+    if (format === 'pdf') return { name: `${base}.pdf`, blob: await renderToPdf(text) }
+    if (format === 'ico') return { name: `${base}.ico`, blob: await renderToIco(text) }
+    const { blob } = await renderToBlob(text, {
+      format,
+      scale,
+      width: sizeMode === 'custom' ? customWidth : null,
+      height: sizeMode === 'custom' ? customHeight : null,
+      quality,
+      background: format === 'svg' ? null : useBackground ? background : null,
+      trim: isRaster && trimTransparent,
+      rotation,
+      flipH,
+      flipV,
+    })
+    return { name: `${base}.${fileExtension(format)}`, blob }
+  }, [format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, isRaster, trimTransparent, rotation, flipH, flipV])
+
+  const onBatchPick = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length) setBatchFiles(files)
+    e.target.value = ''
+  }, [])
 
   const downloadGif = useCallback(async () => {
     if (!trimmed) {
@@ -760,8 +814,15 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
     e.preventDefault()
     dragCounter.current = 0
     setIsDragging(false)
-    const file = e.dataTransfer.files?.[0]
-    if (!file) return
+    const files = Array.from(e.dataTransfer.files ?? [])
+    const svgs = files.filter((f) => /\.svg$/i.test(f.name) || f.type === 'image/svg+xml')
+    if (!files.length) return
+    // Multiple SVGs → batch convert; a single file loads into the editor as before.
+    if (svgs.length > 1) {
+      setBatchFiles(svgs)
+      return
+    }
+    const file = files[0]
     if (!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
       setStatus({ kind: 'error', text: 'Drop an .svg file to load it.' })
       return
@@ -809,6 +870,16 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
       )}
 
       <NavBar theme={theme} setTheme={setTheme} active="svg-to-image" />
+
+      {batchFiles && (
+        <BatchModal
+          title={`Batch export to ${fileExtension(format).toUpperCase()}`}
+          files={batchFiles}
+          convert={convertBatchFile}
+          zipName={`code2svg-${fileExtension(format)}.zip`}
+          onClose={() => setBatchFiles(null)}
+        />
+      )}
 
       {infoPageId && (() => {
         const infoPage = INFO_PAGES.find((p) => p.id === infoPageId)
@@ -907,6 +978,14 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
               </button>
               <button
                 className="icon-btn"
+                onClick={() => batchInputRef.current?.click()}
+                title="Batch convert multiple SVGs"
+                aria-label="Batch convert multiple SVGs"
+              >
+                <Icon name="layers" />
+              </button>
+              <button
+                className="icon-btn"
                 onClick={copyCode}
                 title={codeCopied ? 'Copied' : 'Copy code'}
                 aria-label="Copy code"
@@ -935,6 +1014,14 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
                 accept=".svg,image/svg+xml"
                 hidden
                 onChange={onUpload}
+              />
+              <input
+                ref={batchInputRef}
+                type="file"
+                accept=".svg,image/svg+xml"
+                multiple
+                hidden
+                onChange={onBatchPick}
               />
             </div>
           </div>
@@ -1208,7 +1295,7 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
             <div className="field">
               <label>Format</label>
               <div className="seg wide seg-wrap">
-                {FORMATS.map((f) => (
+                {availableFormats.map((f) => (
                   <button
                     key={f.id}
                     className={format === f.id ? 'seg-btn active' : 'seg-btn'}
