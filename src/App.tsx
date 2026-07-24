@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { xml } from '@codemirror/lang-xml'
 import { linter, lintGutter, type Diagnostic } from '@codemirror/lint'
-import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night'
+import { code2svgDarkTheme, code2svgLightTheme } from './editorTheme'
 import {
   fileExtension,
   findColors,
@@ -45,6 +45,8 @@ const FORMATS: { id: ImageFormat; label: string }[] = [
 
 const SCALES = [0.5, 1, 2, 3, 4]
 
+const BG_PRESETS = ['#0f172a', '#ffffff', '#000000', '#6366f1', '#ec4899', '#10b981']
+
 const xmlLinter = linter((view): Diagnostic[] => {
   const error = findXmlError(view.state.doc.toString())
   if (!error) return []
@@ -77,32 +79,49 @@ const OUTPUT_TABS: { id: OutputTab; label: string }[] = [
 
 // Inline stroke icons (24-grid, currentColor) — keeps the app dependency-light.
 const ICON_PATHS: Record<string, string> = {
-  zoomOut: 'M11 11m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M21 21l-4.35-4.35 M8 11h6',
-  zoomIn: 'M11 11m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M21 21l-4.35-4.35 M8 11h6 M11 8v6',
-  fit: 'M4 9V5a1 1 0 0 1 1-1h4 M20 9V5a1 1 0 0 0-1-1h-4 M4 15v4a1 1 0 0 0 1 1h4 M20 15v4a1 1 0 0 1-1 1h-4',
-  fullscreen: 'M8 3H5a2 2 0 0 0-2 2v3 M16 3h3a2 2 0 0 1 2 2v3 M8 21H5a2 2 0 0 1-2-2v-3 M16 21h3a2 2 0 0 0 2-2v-3',
-  rotateLeft: 'M4 12a8 8 0 1 0 2.34-5.66 M3 4v4h4',
-  rotateRight: 'M20 12a8 8 0 1 1-2.34-5.66 M21 4v4h-4',
-  flipH: 'M12 2v20 M8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3 M16 6h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3',
-  flipV: 'M2 12h20 M6 8V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3 M6 16v3a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3',
+  zoomOut: 'M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-4.3-4.3 M8 11h6',
+  zoomIn: 'M11 11m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-4.3-4.3 M11 8v6 M8 11h6',
+  fit: 'M8 3H5a2 2 0 0 0-2 2v3 M16 3h3a2 2 0 0 1 2 2v3 M21 16v3a2 2 0 0 1-2 2h-3 M3 16v3a2 2 0 0 0 2 2h3',
+  fullscreen: 'M15 3h6v6 M9 21H3v-6 M21 3l-7 7 M3 21l7-7',
+  rotateLeft: 'M3 12a9 9 0 1 0 3-6.7L3 8 M3 3v5h5',
+  rotateRight: 'M21 12a9 9 0 1 1-3-6.7L21 8 M21 3v5h-5',
+  flipH: 'M12 3v18 M7 8l-4 4 4 4 M17 8l4 4-4 4',
+  flipV: 'M3 12h18 M8 7l4-4 4 4 M8 17l4 4 4-4',
   resetTransform: 'M9 14L4 9l5-5 M4 9h11a4 4 0 0 1 0 8h-1',
   palette:
     'M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 2.45-3 2.5 2.5 0 0 1 2.45-3H20a2 2 0 0 0 2-2 9 9 0 0 0-10-8z M7.5 10.5h.01 M12 7.5h.01 M16.5 10.5h.01',
   settings:
     'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37c1 .608 2.296.07 2.572-1.065z M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0',
+  sun: 'M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0 M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
+  moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
+  star: 'M12 2l1.8 4.4L18.5 8.2 14 10 12 14.5 10 10 5.5 8.2 10.2 6.4z',
+  folderOpen:
+    'M4 8V6a2 2 0 0 1 2-2h3l2 2h6a2 2 0 0 1 2 2v1 M3.6 9h16.8l-1.9 8.8a1 1 0 0 1-1 .8H6.5a1 1 0 0 1-1-.8z',
+  trash: 'M4 7h16 M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2 M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13',
+  formatIcon: 'M15 4V2 M15 22v-2 M19 6h2 M3 6h2 M4.5 19.5 15 9 M13.5 7.5l3 3',
+  bolt: 'M13 2 4 14h6l-1 8 9-12h-6z',
+  uploadTray: 'M12 15V4 M8 8l4-4 4 4 M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2',
+  clipboard:
+    'M11 9H18A2 2 0 0 1 20 11V18A2 2 0 0 1 18 20H11A2 2 0 0 1 9 18V11A2 2 0 0 1 11 9Z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
+  image:
+    'M5 3H19A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3Z M8.5 8.5m-1.6 0a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0 M21 15l-5-5L5 21',
+  download: 'M12 3v12 M8 11l4 4 4-4 M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2',
+  check: 'M20 6 9 17l-5-5',
+  shield: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z M9 12l2 2 4-4',
 }
 
-function Icon({ name }: { name: string }) {
+function Icon({ name, filled, color }: { name: string; filled?: boolean; color?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       width="18"
       height="18"
-      fill="none"
-      stroke="currentColor"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke={filled ? 'none' : 'currentColor'}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      style={color ? { color } : undefined}
       aria-hidden="true"
     >
       {ICON_PATHS[name].split(' M').map((seg, i) => (
@@ -182,6 +201,38 @@ function ColorSwatch({ value, hex, onCommit }: ColorSwatchProps) {
   )
 }
 
+function useFlash(duration = 1400) {
+  const [active, setActive] = useState(false)
+  const trigger = useCallback(() => {
+    setActive(true)
+    setTimeout(() => setActive(false), duration)
+  }, [duration])
+  return [active, trigger] as const
+}
+
+interface CheckRowProps {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+}
+
+function CheckRow({ checked, onChange, label }: CheckRowProps) {
+  return (
+    <button
+      type="button"
+      className="check-row"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+    >
+      <span className={checked ? 'check-box on' : 'check-box'}>
+        {checked && <Icon name="check" />}
+      </span>
+      {label}
+    </button>
+  )
+}
+
 export default function App() {
   const [theme, setTheme] = useState<AppTheme>(getInitialTheme)
   const [code, setCode] = useState(SAMPLE_SVG)
@@ -207,6 +258,10 @@ export default function App() {
   const [optimizeOptions, setOptimizeOptions] = useState<OptimizeOptions>(getInitialOptimizeOptions)
   const [showOptimizeSettings, setShowOptimizeSettings] = useState(false)
   const [optimizeResult, setOptimizeResult] = useState<{ originalBytes: number; optimizedBytes: number } | null>(null)
+  const [codeCopied, flashCodeCopied] = useFlash()
+  const [outputCopied, flashOutputCopied] = useFlash()
+  const [downloaded, flashDownloaded] = useFlash()
+  const [imageCopied, flashImageCopied] = useFlash()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
@@ -472,12 +527,13 @@ export default function App() {
       URL.revokeObjectURL(url)
       const sizeNote = format !== 'svg' && trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
       setStatus({ kind: 'info', text: `Downloaded as ${fileExtension(format).toUpperCase()}${sizeNote}.` })
+      flashDownloaded()
     } catch (err) {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
     } finally {
       setBusy(false)
     }
-  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV])
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV, flashDownloaded])
 
   const downloadGif = useCallback(async () => {
     if (!trimmed) {
@@ -573,12 +629,13 @@ export default function App() {
       await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
       const sizeNote = trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
       setStatus({ kind: 'info', text: `Image copied to clipboard as PNG${sizeNote}.` })
+      flashImageCopied()
     } catch (err) {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not copy the image.' })
     } finally {
       setBusy(false)
     }
-  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV])
+  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV, flashImageCopied])
 
   const handleWidthChange = useCallback((value: number) => {
     setCustomWidth(value)
@@ -598,10 +655,11 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(code)
       setStatus({ kind: 'info', text: 'SVG code copied to clipboard.' })
+      flashCodeCopied()
     } catch {
       setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
     }
-  }, [code])
+  }, [code, flashCodeCopied])
 
   const outputContent = useMemo(() => {
     if (outputTab === 'preview') return { text: '', label: '', error: null as string | null }
@@ -627,10 +685,11 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(outputContent.text)
       setStatus({ kind: 'info', text: `${outputContent.label} output copied to clipboard.` })
+      flashOutputCopied()
     } catch {
       setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
     }
-  }, [outputContent])
+  }, [outputContent, flashOutputCopied])
 
   const formatCode = useCallback(() => {
     if (!trimmed) {
@@ -758,11 +817,9 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <span className="logo" aria-hidden="true">
-            <svg viewBox="0 0 32 32" width="26" height="26">
-              <rect width="32" height="32" rx="7" fill="#6366f1" />
-              <path d="M11 9 L6 16 L11 23" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M21 9 L26 16 L21 23" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="18" y1="7" x2="14" y2="25" stroke="#a5b4fc" strokeWidth="2.4" strokeLinecap="round" />
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
             </svg>
           </span>
           <div>
@@ -775,11 +832,25 @@ export default function App() {
             className="ghost"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
           >
-            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            {theme === 'dark' ? (
+              <Icon name="moon" color="#9fa8da" />
+            ) : (
+              <Icon name="sun" color="#f4c04d" />
+            )}
+            {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
-          <button className="ghost" onClick={() => setShowChangelog(true)}>What's new</button>
-          <button className="ghost" onClick={() => { setCode(SAMPLE_SVG); resetPreviewView() }}>Load sample</button>
-          <button className="ghost" onClick={() => { setCode(''); setStatus(null); resetPreviewView() }}>Clear</button>
+          <button className="ghost" onClick={() => setShowChangelog(true)}>
+            <Icon name="star" filled color="#c9a9ff" />
+            What's new
+          </button>
+          <button className="ghost" onClick={() => { setCode(SAMPLE_SVG); resetPreviewView() }}>
+            <Icon name="folderOpen" />
+            Load sample
+          </button>
+          <button className="ghost danger" onClick={() => { setCode(''); setStatus(null); resetPreviewView() }}>
+            <Icon name="trash" />
+            Clear
+          </button>
         </div>
       </header>
 
@@ -844,9 +915,15 @@ export default function App() {
           <div className="pane-head">
             <span className="pane-title">SVG code</span>
             <div className="pane-tools">
-              <button className="ghost" onClick={formatCode}>Format</button>
+              <button className="ghost" onClick={formatCode}>
+                <Icon name="formatIcon" />
+                Format
+              </button>
               <div className="optimize-group">
-                <button className="ghost" onClick={runOptimize}>Optimize</button>
+                <button className="ghost" onClick={runOptimize}>
+                  <Icon name="bolt" filled />
+                  Optimize
+                </button>
                 <button
                   className={showOptimizeSettings ? 'icon-btn active' : 'icon-btn'}
                   onClick={() => setShowOptimizeSettings((v) => !v)}
@@ -889,8 +966,15 @@ export default function App() {
                   </>
                 )}
               </div>
-              <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
-              <button className="ghost" onClick={copyCode}>Copy</button>
+              <span className="divider-v" />
+              <button className="ghost" onClick={() => fileInputRef.current?.click()}>
+                <Icon name="uploadTray" />
+                Upload
+              </button>
+              <button className="ghost" onClick={copyCode}>
+                <Icon name={codeCopied ? 'check' : 'clipboard'} color={codeCopied ? 'var(--info)' : undefined} />
+                {codeCopied ? 'Copied' : 'Copy'}
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -908,7 +992,7 @@ export default function App() {
           <CodeMirror
             value={code}
             height="100%"
-            theme={theme === 'dark' ? tokyoNight : 'light'}
+            theme={theme === 'dark' ? code2svgDarkTheme : code2svgLightTheme}
             extensions={[xml(), xmlLinter, lintGutter()]}
             onChange={setCode}
             className="editor"
@@ -925,7 +1009,7 @@ export default function App() {
 
         <section className="pane preview-pane" ref={previewPaneRef}>
           <div className="preview-toolbar">
-            <div className="tb-group">
+            <div className="tb-group pill">
               <button className="icon-btn" onClick={() => zoomBy(1 / 1.2)} title="Zoom out">
                 <Icon name="zoomOut" />
               </button>
@@ -935,17 +1019,17 @@ export default function App() {
               <button className="icon-btn" onClick={() => zoomBy(1.2)} title="Zoom in">
                 <Icon name="zoomIn" />
               </button>
-              <button className="icon-btn" onClick={resetPreviewView} title="Fit to screen">
-                <Icon name="fit" />
-              </button>
-              <button
-                className={isFullscreen ? 'icon-btn active' : 'icon-btn'}
-                onClick={toggleFullscreen}
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen preview'}
-              >
-                <Icon name="fullscreen" />
-              </button>
             </div>
+            <button className="icon-btn boxed" onClick={resetPreviewView} title="Fit to screen">
+              <Icon name="fit" />
+            </button>
+            <button
+              className={isFullscreen ? 'icon-btn boxed active' : 'icon-btn boxed'}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen preview'}
+            >
+              <Icon name="fullscreen" />
+            </button>
 
             <span className="tb-divider" />
 
@@ -1039,6 +1123,11 @@ export default function App() {
             ) : (
               <p className="empty">Your SVG preview will appear here.</p>
             )}
+            {previewUrl && dimensions && (
+              <div className="dim-chip">
+                {Math.round(dimensions.width)} × {Math.round(dimensions.height)}
+              </div>
+            )}
           </div>
 
           <div className="output-area">
@@ -1048,7 +1137,8 @@ export default function App() {
                 <div className="output-head">
                   <span className="output-lang">{outputContent.label}</span>
                   <button className="ghost" onClick={copyOutput} disabled={!outputContent.text}>
-                    Copy
+                    <Icon name={outputCopied ? 'check' : 'clipboard'} color={outputCopied ? 'var(--info)' : undefined} />
+                    {outputCopied ? 'Copied' : 'Copy'}
                   </button>
                 </div>
                 <div className="output-code">
@@ -1058,7 +1148,7 @@ export default function App() {
                     <CodeMirror
                       value={outputContent.text}
                       height="100%"
-                      theme={theme === 'dark' ? tokyoNight : 'light'}
+                      theme={theme === 'dark' ? code2svgDarkTheme : code2svgLightTheme}
                       extensions={[xml()]}
                       editable={false}
                       className="output-editor"
@@ -1147,12 +1237,15 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="dimension-row">
-                    <input
-                      type="number"
-                      min={1}
-                      value={customWidth}
-                      onChange={(e) => handleWidthChange(Number(e.target.value))}
-                    />
+                    <label className="dimension-field">
+                      <span className="micro-label">Width</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={customWidth}
+                        onChange={(e) => handleWidthChange(Number(e.target.value))}
+                      />
+                    </label>
                     <button
                       type="button"
                       className={lockAspect ? 'lock-btn active' : 'lock-btn'}
@@ -1161,12 +1254,15 @@ export default function App() {
                     >
                       {lockAspect ? '🔒' : '🔓'}
                     </button>
-                    <input
-                      type="number"
-                      min={1}
-                      value={customHeight}
-                      onChange={(e) => handleHeightChange(Number(e.target.value))}
-                    />
+                    <label className="dimension-field">
+                      <span className="micro-label">Height</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={customHeight}
+                        onChange={(e) => handleHeightChange(Number(e.target.value))}
+                      />
+                    </label>
                   </div>
                 )}
               </div>
@@ -1174,14 +1270,7 @@ export default function App() {
 
             {format !== 'svg' && (
               <div className="field">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={trimTransparent}
-                    onChange={(e) => setTrimTransparent(e.target.checked)}
-                  />
-                  Auto-crop to content
-                </label>
+                <CheckRow checked={trimTransparent} onChange={setTrimTransparent} label="Auto-crop to content" />
                 <p className="hint">Crops the export to the visible artwork, removing transparent or solid-color padding.</p>
               </div>
             )}
@@ -1202,28 +1291,35 @@ export default function App() {
 
             {format !== 'svg' && (
               <div className="field">
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={useBackground}
-                    onChange={(e) => setUseBackground(e.target.checked)}
-                  />
-                  Background color
-                </label>
+                <CheckRow checked={useBackground} onChange={setUseBackground} label="Background color" />
                 {useBackground && (
-                  <div className="color-row">
-                    <input
-                      type="color"
-                      value={background}
-                      onChange={(e) => setBackground(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      value={background}
-                      onChange={(e) => setBackground(e.target.value)}
-                      spellCheck={false}
-                    />
-                  </div>
+                  <>
+                    <div className="bg-swatches">
+                      {BG_PRESETS.map((hex) => (
+                        <button
+                          key={hex}
+                          type="button"
+                          className={background === hex ? 'bg-swatch active' : 'bg-swatch'}
+                          style={{ background: hex }}
+                          title={hex}
+                          onClick={() => setBackground(hex)}
+                        />
+                      ))}
+                    </div>
+                    <div className="color-row">
+                      <input
+                        type="color"
+                        value={background}
+                        onChange={(e) => setBackground(e.target.value)}
+                      />
+                      <input
+                        type="text"
+                        value={background}
+                        onChange={(e) => setBackground(e.target.value)}
+                        spellCheck={false}
+                      />
+                    </div>
+                  </>
                 )}
                 {format === 'jpeg' && !useBackground && (
                   <p className="hint">JPG has no transparency — a white background is applied.</p>
@@ -1244,11 +1340,13 @@ export default function App() {
             </div>
 
             <button className="primary" onClick={download} disabled={busy || !trimmed}>
-              {busy ? 'Rendering…' : `Download ${fileExtension(format).toUpperCase()}`}
+              <Icon name={downloaded ? 'check' : 'download'} />
+              {busy ? 'Rendering…' : downloaded ? 'Downloaded' : `Download ${fileExtension(format).toUpperCase()}`}
             </button>
 
             <button className="ghost wide" onClick={copyImage} disabled={busy || !trimmed}>
-              Copy image (PNG)
+              <Icon name={imageCopied ? 'check' : 'image'} color={imageCopied ? 'var(--info)' : undefined} />
+              {imageCopied ? 'Copied' : 'Copy image (PNG)'}
             </button>
 
             {isAnimated && (
@@ -1299,7 +1397,10 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <span>Runs entirely in your browser — nothing is uploaded.</span>
+        <span className="footer-status">
+          <Icon name="shield" />
+          Runs entirely in your browser — nothing is uploaded.
+        </span>
         <nav className="footer-links">
           {INFO_PAGES.map((p) => (
             <button key={p.id} className="link-btn" onClick={() => setInfoPageId(p.id)}>

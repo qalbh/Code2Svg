@@ -1,7 +1,7 @@
 {
   "name": "code2svg",
   "private": true,
-  "version": "1.18.0",
+  "version": "1.19.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@codemirror/lint": "^6.9.7",
-    "@uiw/codemirror-theme-tokyo-night": "^4.23.7",
+    "@lezer/highlight": "^1.2.3",
+    "@uiw/codemirror-themes": "^4.25.11",
     "@uiw/react-codemirror": "^4.23.7",
     "gifenc": "^1.0.3",
     "react": "^18.3.1",

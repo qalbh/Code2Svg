@@ -6,6 +6,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.19.0',
+    date: '2026-07-24',
+    changes: [
+      'Visual redesign — new Space Grotesk / JetBrains Mono typography, a refreshed near-black dark theme with softer accent-tinted selected states, a custom code-editor color theme, and a matching light theme.',
+      'The preview now shows a floating dimension chip, a drop-shadow under the artwork, and six quick-pick background color swatches.',
+      'Copy, Copy image, and Download now show a brief "Copied"/"Downloaded" confirmation with a checkmark.',
+    ],
+  },
+  {
     version: '1.18.0',
     date: '2026-07-24',
     changes: [

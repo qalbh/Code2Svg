@@ -19,8 +19,12 @@ uploaded to a server.
 - **React 18** + **TypeScript** (function components + hooks only)
 - **Vite 6** for dev server and build
 - **CodeMirror** (`@uiw/react-codemirror`, `@codemirror/lang-xml`,
-  `@codemirror/lint`, `@uiw/codemirror-theme-tokyo-night`) — the SVG editor, its
-  inline XML linter, and the read-only syntax-highlighted output drawer
+  `@codemirror/lint`, `@uiw/codemirror-themes`, `@lezer/highlight`) — the SVG
+  editor, its inline XML linter, and the read-only syntax-highlighted output
+  drawer. Syntax colors come from a custom theme in `editorTheme.ts`, not a
+  stock CodeMirror theme package.
+- **Space Grotesk** (UI) + **JetBrains Mono** (code/numeric text), loaded via
+  `<link>` tags in `index.html` — see `--font-ui`/`--font-mono` in `index.css`.
 - **gifenc** — encoder dependency used for animated-GIF export
 - **svgo** — SVG minification for the Optimize button. Imported from **`svgo/browser`**
   (not the package's default `.` entry), which is a pure-browser build with no Node
@@ -57,6 +61,7 @@ src/
   svgToCode.ts        # SVG → React / React Native / Data URI code generation
   optimizeSvg.ts      # SVGO minification: options, plugin metadata, optimizeSvg()
   infoPages.ts        # static copy for the About / Terms / Privacy footer modals
+  editorTheme.ts      # custom CodeMirror theme (dark + light) matching index.css tokens
   changelog.ts        # in-app "What's new" changelog data (see workflow below)
   index.css           # all styling (CSS variables, light + dark themes)
   gifenc.d.ts         # local type declarations for gifenc (no bundled types)
@@ -85,6 +90,12 @@ APIs (`DOMParser`, `canvas`, `Image`, `btoa`/`TextEncoder`) but hold no React st
   the settings popover) — all SVGO-specific knowledge lives here, not in `App.tsx`.
 - **`infoPages.ts`** — static `INFO_PAGES` array (id/label/title/sections) rendered
   by a single generic modal in `App.tsx`, keyed off `infoPageId` state.
+- **`editorTheme.ts`** — `code2svgDarkTheme` / `code2svgLightTheme`, built with
+  `@uiw/codemirror-themes`'s `createTheme` + `@lezer/highlight` tags
+  (`tagName`/`attributeName`/`attributeValue`/`angleBracket`/`blockComment`).
+  Passed as the `theme` prop to both `CodeMirror` instances in `App.tsx` (the
+  main editor and the read-only output-drawer editor) — keep both in sync if you
+  change one.
 
 ## How image conversion works (`svgToImage.ts`)
 
@@ -135,6 +146,15 @@ These were each found the hard way (often via decode-and-verify testing). Don't
   enabled). Keep this split in sync if SVGO is upgraded.
 - **`removeViewBox` defaults off:** the app relies on `viewBox` for scaling in the
   preview and raster export sizing — never flip its default to enabled.
+- **Selected/active states use `color-mix()`**, not a hardcoded rgba: e.g.
+  `.seg-btn.active`/`.icon-btn.active`/`.output-tab.active` use
+  `color-mix(in srgb, var(--accent) 16%, transparent)` so the tinted look tracks
+  `--accent` automatically in both themes. This assumes a `color-mix()`-capable
+  browser (all current evergreen browsers) — there's no fallback.
+- **`Icon` (in `App.tsx`) supports `filled`/`color` props** for the handful of
+  icons that aren't plain `currentColor` strokes (the filled bolt/star icons, the
+  themed sun/moon). Don't add a new stroke-only icon without checking whether it
+  actually needs `filled`.
 
 ## Conventions
 
