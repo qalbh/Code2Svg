@@ -498,9 +498,9 @@ export default function App() {
                     checked={trimTransparent}
                     onChange={(e) => setTrimTransparent(e.target.checked)}
                   />
-                  Trim transparent edges
+                  Auto-crop to content
                 </label>
-                <p className="hint">Crops the export to the visible content, removing empty padding.</p>
+                <p className="hint">Crops the export to the visible artwork, removing transparent or solid-color padding.</p>
               </div>
             )}
 

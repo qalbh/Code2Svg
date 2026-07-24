@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.1',
+    date: '2026-07-24',
+    changes: [
+      'Fixed auto-crop to also trim solid-color padding (e.g. a white background box drawn inside the SVG), not just fully transparent edges.',
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-07-24',
     changes: [

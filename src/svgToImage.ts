@@ -130,8 +130,18 @@ interface ContentBounds {
   height: number
 }
 
+const TRIM_TOLERANCE = 10
+
 function findContentBounds(ctx: CanvasRenderingContext2D, width: number, height: number): ContentBounds | null {
   const { data } = ctx.getImageData(0, 0, width, height)
+
+  // Treat the corner pixel's color as the "background" to strip, whether that's
+  // transparent or a solid fill (e.g. a white background box drawn in the SVG itself).
+  const bgR = data[0]
+  const bgG = data[1]
+  const bgB = data[2]
+  const bgA = data[3]
+
   let top = -1
   let bottom = -1
   let left = width
@@ -139,8 +149,13 @@ function findContentBounds(ctx: CanvasRenderingContext2D, width: number, height:
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const alpha = data[(y * width + x) * 4 + 3]
-      if (alpha === 0) continue
+      const i = (y * width + x) * 4
+      const isBackground =
+        Math.abs(data[i] - bgR) <= TRIM_TOLERANCE &&
+        Math.abs(data[i + 1] - bgG) <= TRIM_TOLERANCE &&
+        Math.abs(data[i + 2] - bgB) <= TRIM_TOLERANCE &&
+        Math.abs(data[i + 3] - bgA) <= TRIM_TOLERANCE
+      if (isBackground) continue
       if (top === -1) top = y
       bottom = y
       if (x < left) left = x
