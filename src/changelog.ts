@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.21.0',
+    date: '2026-07-24',
+    changes: [
+      'New Image → SVG tool — upload or drag a PNG/JPG and trace it to a scalable SVG in your browser, with adjustable colors, detail, and smoothing, a live preview, and copy/download. Best for logos, icons, and flat graphics.',
+      'Added a top navigation bar to switch between the SVG → Image and Image → SVG tools.',
+    ],
+  },
+  {
     version: '1.20.0',
     date: '2026-07-24',
     changes: [

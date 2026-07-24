@@ -48,23 +48,42 @@ treat its failure as your change breaking something.
 
 ## Project structure
 
+The app is a **multi-page** Vite build (two real HTML entries, NOT a client-side
+router) so each tool is its own crawlable URL:
+
+- `/` (`index.html` → `main.tsx` → `App.tsx`) — the SVG → Image tool.
+- `/image-to-svg` (`image-to-svg.html` → `main-image.tsx` → `ImageToSvg.tsx`) —
+  the Image → SVG (raster tracing) tool. The clean URL comes from `cleanUrls: true`
+  in `vercel.json`; in dev it's served at `/image-to-svg.html`.
+
+Both entries are declared in `vite.config.ts` under `build.rollupOptions.input`.
+Each HTML file carries its own SEO `<title>`/`<meta description>` and the inline
+theme-bootstrap script — keep those in sync if you touch one.
+
 ```
-index.html            # Vite entry; mounts #root, sets initial theme before paint
-vercel.json           # Vercel: framework=vite, output=dist
-vite.config.ts        # just @vitejs/plugin-react
+index.html            # Vite entry (SVG→Image); mounts #root, sets initial theme before paint
+image-to-svg.html     # Vite entry (Image→SVG); same structure + its own SEO <head>
+vercel.json           # Vercel: framework=vite, output=dist, cleanUrls=true
+vite.config.ts        # @vitejs/plugin-react + rollupOptions.input (both html entries)
 public/favicon.svg    # app icon
 src/
-  main.tsx            # React root (StrictMode)
-  App.tsx             # ~1300 lines: the ENTIRE UI + all React state
+  main.tsx            # React root for App (StrictMode)
+  main-image.tsx      # React root for ImageToSvg (StrictMode)
+  App.tsx             # ~1250 lines: the ENTIRE SVG→Image UI + all its React state
+  ImageToSvg.tsx      # the Image→SVG page: upload/trace UI + state (logic in imageToSvg.ts)
+  NavBar.tsx          # shared top nav + logo + Dark/Light toggle + useTheme() hook (both pages)
+  Icon.tsx            # shared inline-SVG Icon component + ICON_PATHS (used by both pages)
   svgToImage.ts       # raster/SVG export, dimensions, colors, prettify, XML errors
   svgToGif.ts         # animated SVG → GIF encoding
   svgToCode.ts        # SVG → React / React Native / Data URI code generation
   optimizeSvg.ts      # SVGO minification: options, plugin metadata, optimizeSvg()
+  imageToSvg.ts       # raster → SVG tracing (imagetracerjs): fileToImageData + traceImageData
   infoPages.ts        # static copy for the About / Terms / Privacy footer modals
   editorTheme.ts      # custom CodeMirror theme (dark + light) matching index.css tokens
   changelog.ts        # in-app "What's new" changelog data (see workflow below)
   index.css           # all styling (CSS variables, light + dark themes)
   gifenc.d.ts         # local type declarations for gifenc (no bundled types)
+  imagetracerjs.d.ts  # local type declarations for imagetracerjs (no bundled types)
   vite-env.d.ts
 ```
 
@@ -163,8 +182,8 @@ These were each found the hard way (often via decode-and-verify testing). Don't
 - **No semicolons; single quotes; 2-space indent** (match existing files).
 - Keep it dependency-light. Prefer platform APIs (`DOMParser`, `canvas`, `Blob`,
   `URL.createObjectURL`, `TextEncoder`/`btoa`) over new libraries. New dependencies
-  are a deliberate, justified decision — only `gifenc` (GIF encoding) and `svgo`
-  (Optimize/minify) have been added.
+  are a deliberate, justified decision — only `gifenc` (GIF encoding), `svgo`
+  (Optimize/minify), and `imagetracerjs` (raster → SVG tracing) have been added.
 - Reuse existing patterns: the clipboard-copy + `setStatus` message pattern, the
   segmented-control (`.seg`/`.seg-btn`) and icon-button (`.icon-btn`) styles, the
   `.modal-overlay`/`.modal` structure (changelog, About/Terms/Privacy all share it),

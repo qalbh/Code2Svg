@@ -1,0 +1,418 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { xml } from '@codemirror/lang-xml'
+import { code2svgDarkTheme, code2svgLightTheme } from './editorTheme'
+import { NavBar, useTheme } from './NavBar'
+import { Icon } from './Icon'
+import { formatFileSize } from './svgToImage'
+import {
+  DEFAULT_TRACE_OPTIONS,
+  fileToImageData,
+  traceImageData,
+  type TraceOptions,
+} from './imageToSvg'
+
+const ACCEPTED = /^image\/(png|jpeg)$/
+const ACCEPTED_EXT = /\.(png|jpe?g)$/i
+
+interface Loaded {
+  imageData: ImageData
+  width: number
+  height: number
+}
+
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: 'How do I convert a PNG or JPG to SVG?',
+    a: 'Upload or drag an image onto the panel, adjust the number of colors, detail, and smoothing to taste, then copy the generated SVG code or download the .svg file. Everything runs in your browser.',
+  },
+  {
+    q: 'Is it free?',
+    a: 'Yes — it is completely free and runs entirely on your device. Your image is never uploaded to a server.',
+  },
+  {
+    q: 'Does it work for photographs?',
+    a: 'Tracing works best for logos, icons, and flat or simple graphics with solid areas of color. Photographs contain smooth gradients and fine detail that trace into thousands of paths, producing a large, blurry SVG — so they are not a good fit.',
+  },
+  {
+    q: 'What is the difference between a raster image and an SVG?',
+    a: 'PNG and JPG are raster formats made of pixels, so they blur when scaled up. SVG is a vector format made of shapes and paths that stays crisp at any size — ideal for logos and icons.',
+  },
+]
+
+export default function ImageToSvg() {
+  const [theme, setTheme] = useTheme()
+
+  const [file, setFile] = useState<File | null>(null)
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const [options, setOptions] = useState<TraceOptions>(DEFAULT_TRACE_OPTIONS)
+  const [svg, setSvg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragCounter = useRef(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Thumbnail object URL — created/revoked in one effect (StrictMode-safe).
+  useEffect(() => {
+    if (!file) {
+      setSourceUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setSourceUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  // Decode the file to pixels whenever it changes.
+  useEffect(() => {
+    if (!file) {
+      setLoaded(null)
+      return
+    }
+    let cancelled = false
+    setBusy(true)
+    fileToImageData(file)
+      .then((result) => {
+        if (cancelled) return
+        setLoaded(result)
+        setStatus(null)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setLoaded(null)
+        setSvg('')
+        setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not read the image.' })
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [file])
+
+  // Debounced live retrace whenever the pixels or options change.
+  useEffect(() => {
+    if (!loaded) {
+      setSvg('')
+      return
+    }
+    setBusy(true)
+    let cancelled = false
+    const id = setTimeout(() => {
+      try {
+        const result = traceImageData(loaded.imageData, options)
+        if (!cancelled) {
+          setSvg(result)
+          setStatus(null)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSvg('')
+          setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not trace this image.' })
+        }
+      } finally {
+        if (!cancelled) setBusy(false)
+      }
+    }, 280)
+    return () => {
+      cancelled = true
+      clearTimeout(id)
+    }
+  }, [loaded, options])
+
+  const loadFile = useCallback((next: File) => {
+    if (!ACCEPTED.test(next.type) && !ACCEPTED_EXT.test(next.name)) {
+      setStatus({ kind: 'error', text: 'Please choose a PNG or JPG image.' })
+      return
+    }
+    setFile(next)
+  }, [])
+
+  const onUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.files?.[0]
+    if (next) loadFile(next)
+    e.target.value = ''
+  }, [loadFile])
+
+  const onDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.dataTransfer.types.includes('Files')) return
+    dragCounter.current += 1
+    setIsDragging(true)
+  }, [])
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+  }, [])
+
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current = Math.max(0, dragCounter.current - 1)
+    if (dragCounter.current === 0) setIsDragging(false)
+  }, [])
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current = 0
+    setIsDragging(false)
+    const next = e.dataTransfer.files?.[0]
+    if (next) loadFile(next)
+  }, [loadFile])
+
+  const clearImage = useCallback(() => {
+    setFile(null)
+    setLoaded(null)
+    setSvg('')
+    setStatus(null)
+  }, [])
+
+  const setOption = useCallback((key: keyof TraceOptions, value: number) => {
+    setOptions((prev) => ({ ...prev, [key]: value }))
+  }, [])
+
+  const copySvg = useCallback(async () => {
+    if (!svg) return
+    try {
+      await navigator.clipboard.writeText(svg)
+      setStatus({ kind: 'info', text: 'SVG code copied to clipboard.' })
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1400)
+    } catch {
+      setStatus({ kind: 'error', text: 'Clipboard access was denied.' })
+    }
+  }, [svg])
+
+  const downloadSvg = useCallback(() => {
+    if (!svg) return
+    const blob = new Blob([svg], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'traced.svg'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    setStatus({ kind: 'info', text: `Downloaded traced.svg (${formatFileSize(blob.size)}).` })
+  }, [svg])
+
+  const outputSize = useMemo(() => (svg ? formatFileSize(new Blob([svg]).size) : '—'), [svg])
+  const editorTheme = theme === 'dark' ? code2svgDarkTheme : code2svgLightTheme
+
+  return (
+    <div
+      className="app i2s-app"
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      <div className="backdrop" aria-hidden="true">
+        <div className="aurora aurora-a" />
+        <div className="aurora aurora-b" />
+        <div className="aurora aurora-c" />
+        <div className="noise" />
+        <div className="vignette" />
+      </div>
+
+      {isDragging && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-inner">Drop your PNG or JPG to trace it</div>
+        </div>
+      )}
+
+      <NavBar theme={theme} setTheme={setTheme} active="image-to-svg" />
+
+      <main className="workspace i2s-workspace">
+        {/* SOURCE + OPTIONS */}
+        <section className="pane">
+          <div className="pane-head">
+            <span className="pane-title"><span className="dot" />Source</span>
+            {file && (
+              <button className="ghost" onClick={clearImage}>
+                <Icon name="trash" />
+                Remove
+              </button>
+            )}
+          </div>
+          <div className="i2s-source">
+            {sourceUrl ? (
+              <div className="i2s-thumb">
+                <img src={sourceUrl} alt="Source" />
+                <div className="i2s-thumb-meta">
+                  <strong>{file?.name}</strong>
+                  {loaded && <span>{loaded.width} × {loaded.height}px traced</span>}
+                </div>
+              </div>
+            ) : (
+              <button className="i2s-dropzone" onClick={() => fileInputRef.current?.click()}>
+                <Icon name="uploadTray" />
+                <strong>Upload a PNG or JPG</strong>
+                <span>Click to browse, or drag an image anywhere on the page</span>
+              </button>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              hidden
+              onChange={onUpload}
+            />
+
+            {sourceUrl && (
+              <button className="ghost wide" onClick={() => fileInputRef.current?.click()}>
+                <Icon name="image" />
+                Replace image
+              </button>
+            )}
+
+            <div className="field">
+              <label>
+                Number of colors <span className="muted">{options.numberOfColors}</span>
+              </label>
+              <input
+                type="range"
+                min={2}
+                max={64}
+                step={1}
+                value={options.numberOfColors}
+                disabled={!loaded}
+                onChange={(e) => setOption('numberOfColors', Number(e.target.value))}
+              />
+            </div>
+
+            <div className="field">
+              <label>
+                Detail <span className="muted">{options.detail}</span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={options.detail}
+                disabled={!loaded}
+                onChange={(e) => setOption('detail', Number(e.target.value))}
+              />
+            </div>
+
+            <div className="field">
+              <label>
+                Smoothing <span className="muted">{options.smoothing}</span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={options.smoothing}
+                disabled={!loaded}
+                onChange={(e) => setOption('smoothing', Number(e.target.value))}
+              />
+            </div>
+
+            <p className="hint">
+              Tracing works best for logos, icons, and flat or simple graphics — not photographs.
+            </p>
+
+            {status && (
+              <p className={status.kind === 'error' ? 'msg error' : 'msg info'}>{status.text}</p>
+            )}
+          </div>
+        </section>
+
+        {/* PREVIEW */}
+        <section className="pane preview-pane">
+          <div className="pane-head">
+            <span className="pane-title"><span className="dot" />Preview</span>
+            {busy && <span className="i2s-badge">Tracing…</span>}
+          </div>
+          <div className="preview-canvas bg-checker i2s-preview">
+            {svg ? (
+              <>
+                <div className="i2s-traced" dangerouslySetInnerHTML={{ __html: svg }} />
+                {loaded && (
+                  <div className="dim-chip">{loaded.width} × {loaded.height}</div>
+                )}
+              </>
+            ) : (
+              <p className="empty">
+                {loaded ? 'Adjust the options to trace your image.' : 'Upload an image to trace it to SVG.'}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* SVG OUTPUT */}
+        <aside className="pane controls-pane">
+          <div className="pane-head">
+            <span className="pane-title pink"><span className="dot" />SVG output</span>
+          </div>
+          <div className="i2s-output">
+            <div className="i2s-code">
+              {svg ? (
+                <CodeMirror
+                  value={svg}
+                  height="100%"
+                  theme={editorTheme}
+                  extensions={[xml()]}
+                  editable={false}
+                  className="output-editor"
+                  basicSetup={{ lineNumbers: false, foldGutter: false, highlightActiveLine: false }}
+                />
+              ) : (
+                <p className="empty">The generated SVG code will appear here.</p>
+              )}
+            </div>
+
+            <div className="summary">
+              <div><span>SVG size</span><strong>{outputSize}</strong></div>
+              <div><span>Colors</span><strong>{options.numberOfColors}</strong></div>
+            </div>
+
+            <button className="primary" onClick={downloadSvg} disabled={!svg}>
+              <Icon name="download" />
+              Download SVG
+            </button>
+            <button className="ghost wide" onClick={copySvg} disabled={!svg}>
+              <Icon name={copied ? 'check' : 'clipboard'} color={copied ? 'var(--info)' : undefined} />
+              {copied ? 'Copied' : 'Copy SVG'}
+            </button>
+          </div>
+        </aside>
+      </main>
+
+      {/* FAQ / how-to (SEO content) */}
+      <section className="i2s-faq">
+        <h2>How to convert PNG &amp; JPG images to SVG</h2>
+        <p className="i2s-faq-intro">
+          Code2Svg traces raster images into scalable vector graphics right in your browser — nothing
+          is uploaded. Drop in a logo or icon, fine-tune the tracing, and export a clean .svg.
+        </p>
+        <div className="i2s-faq-grid">
+          {FAQ.map((item) => (
+            <div className="i2s-faq-item" key={item.q}>
+              <h3>{item.q}</h3>
+              <p>{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="footer">
+        <span className="footer-status">
+          <Icon name="shield" />
+          Runs entirely in your browser — nothing is uploaded.
+        </span>
+        <nav className="footer-links">
+          <a className="link-btn" href="/">SVG → Image</a>
+        </nav>
+      </footer>
+    </div>
+  )
+}
