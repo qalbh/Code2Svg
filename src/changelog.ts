@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.21.2',
+    date: '2026-07-24',
+    changes: [
+      'The header and footer are now identical across both tools. "What\'s new" lives in the shared header everywhere, and the SVG → Image editor\'s Load sample / Clear moved into the code toolbar.',
+    ],
+  },
+  {
     version: '1.21.1',
     date: '2026-07-24',
     changes: [

@@ -21,7 +21,6 @@ import {
 import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
 import { DEFAULT_OPTIMIZE_OPTIONS, PLUGIN_GROUPS, optimizeSvg, type OptimizeOptions } from './optimizeSvg'
-import { CHANGELOG } from './changelog'
 import { INFO_PAGES, type InfoPage } from './infoPages'
 
 const SAMPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
@@ -190,7 +189,6 @@ export default function App() {
   const [previewBg, setPreviewBg] = useState<PreviewBg>('checker')
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
-  const [showChangelog, setShowChangelog] = useState(false)
   const [infoPageId, setInfoPageId] = useState<InfoPage['id'] | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [gifDuration, setGifDuration] = useState(2)
@@ -758,46 +756,7 @@ export default function App() {
         </div>
       )}
 
-      <NavBar theme={theme} setTheme={setTheme} active="svg-to-image">
-        <button className="ghost" onClick={() => setShowChangelog(true)}>
-          <Icon name="star" filled color="#c9a9ff" />
-          What's new
-        </button>
-        <button className="ghost" onClick={() => { setCode(SAMPLE_SVG); resetPreviewView() }}>
-          <Icon name="folderOpen" />
-          Load sample
-        </button>
-        <button className="ghost danger" onClick={() => { setCode(''); setStatus(null); resetPreviewView() }}>
-          <Icon name="trash" />
-          Clear
-        </button>
-      </NavBar>
-
-      {showChangelog && (
-        <div className="modal-overlay" onClick={() => setShowChangelog(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <span className="pane-title">What's new</span>
-              <button className="ghost" onClick={() => setShowChangelog(false)}>Close</button>
-            </div>
-            <div className="modal-body">
-              {CHANGELOG.map((entry) => (
-                <div className="changelog-entry" key={entry.version}>
-                  <div className="changelog-entry-head">
-                    <strong>v{entry.version}</strong>
-                    <span className="muted">{entry.date}</span>
-                  </div>
-                  <ul>
-                    {entry.changes.map((change) => (
-                      <li key={change}>{change}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <NavBar theme={theme} setTheme={setTheme} active="svg-to-image" />
 
       {infoPageId && (() => {
         const infoPage = INFO_PAGES.find((p) => p.id === infoPageId)
@@ -886,13 +845,37 @@ export default function App() {
                 )}
               </div>
               <span className="divider-v" />
-              <button className="ghost" onClick={() => fileInputRef.current?.click()}>
+              <button
+                className="icon-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload SVG file"
+                aria-label="Upload SVG file"
+              >
                 <Icon name="uploadTray" />
-                Upload
               </button>
-              <button className="ghost" onClick={copyCode}>
+              <button
+                className="icon-btn"
+                onClick={copyCode}
+                title={codeCopied ? 'Copied' : 'Copy code'}
+                aria-label="Copy code"
+              >
                 <Icon name={codeCopied ? 'check' : 'clipboard'} color={codeCopied ? 'var(--info)' : undefined} />
-                {codeCopied ? 'Copied' : 'Copy'}
+              </button>
+              <button
+                className="icon-btn"
+                onClick={() => { setCode(SAMPLE_SVG); resetPreviewView() }}
+                title="Load sample"
+                aria-label="Load sample"
+              >
+                <Icon name="folderOpen" />
+              </button>
+              <button
+                className="icon-btn danger"
+                onClick={() => { setCode(''); setStatus(null); resetPreviewView() }}
+                title="Clear"
+                aria-label="Clear"
+              >
+                <Icon name="trash" />
               </button>
               <input
                 ref={fileInputRef}

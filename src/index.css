@@ -722,6 +722,11 @@ button {
   cursor: not-allowed;
 }
 
+.icon-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--error);
+}
+
 .zoom-label {
   font-family: var(--font-mono);
   font-size: 12px;
