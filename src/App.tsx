@@ -85,6 +85,7 @@ export default function App() {
   const [quality, setQuality] = useState(0.92)
   const [useBackground, setUseBackground] = useState(false)
   const [background, setBackground] = useState('#ffffff')
+  const [trimTransparent, setTrimTransparent] = useState(false)
   const [previewBg, setPreviewBg] = useState<PreviewBg>('checker')
   const [status, setStatus] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -150,13 +151,14 @@ export default function App() {
     setBusy(true)
     setStatus(null)
     try {
-      const blob = await renderToBlob(trimmed, {
+      const { blob, width, height } = await renderToBlob(trimmed, {
         format,
         scale,
         width: sizeMode === 'custom' ? customWidth : null,
         height: sizeMode === 'custom' ? customHeight : null,
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
+        trim: format !== 'svg' && trimTransparent,
       })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -166,13 +168,14 @@ export default function App() {
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
-      setStatus({ kind: 'info', text: `Downloaded as ${fileExtension(format).toUpperCase()}.` })
+      const sizeNote = format !== 'svg' && trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
+      setStatus({ kind: 'info', text: `Downloaded as ${fileExtension(format).toUpperCase()}${sizeNote}.` })
     } catch (err) {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Something went wrong.' })
     } finally {
       setBusy(false)
     }
-  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background])
+  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
 
   const copyImage = useCallback(async () => {
     if (!trimmed) {
@@ -186,22 +189,24 @@ export default function App() {
     setBusy(true)
     setStatus(null)
     try {
-      const blob = await renderToBlob(trimmed, {
+      const { blob, width, height } = await renderToBlob(trimmed, {
         format: 'png',
         scale,
         width: sizeMode === 'custom' ? customWidth : null,
         height: sizeMode === 'custom' ? customHeight : null,
         quality,
         background: useBackground ? background : null,
+        trim: trimTransparent,
       })
       await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-      setStatus({ kind: 'info', text: 'Image copied to clipboard as PNG.' })
+      const sizeNote = trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
+      setStatus({ kind: 'info', text: `Image copied to clipboard as PNG${sizeNote}.` })
     } catch (err) {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not copy the image.' })
     } finally {
       setBusy(false)
     }
-  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background])
+  }, [trimmed, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent])
 
   const handleWidthChange = useCallback((value: number) => {
     setCustomWidth(value)
@@ -276,9 +281,11 @@ export default function App() {
   const outputSize = dimensions
     ? format === 'svg'
       ? `${Math.round(dimensions.width)} × ${Math.round(dimensions.height)}`
-      : sizeMode === 'custom'
-        ? `${Math.round(customWidth)} × ${Math.round(customHeight)} px`
-        : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
+      : trimTransparent
+        ? 'Trimmed to content'
+        : sizeMode === 'custom'
+          ? `${Math.round(customWidth)} × ${Math.round(customHeight)} px`
+          : `${Math.round(dimensions.width * scale)} × ${Math.round(dimensions.height * scale)} px`
     : '—'
 
   return (
@@ -480,6 +487,20 @@ export default function App() {
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {format !== 'svg' && (
+              <div className="field">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={trimTransparent}
+                    onChange={(e) => setTrimTransparent(e.target.checked)}
+                  />
+                  Trim transparent edges
+                </label>
+                <p className="hint">Crops the export to the visible content, removing empty padding.</p>
               </div>
             )}
 

@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    date: '2026-07-24',
+    changes: [
+      'Trim transparent edges — crop PNG/JPG/WebP exports to the visible content, removing empty padding.',
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-07-24',
     changes: [

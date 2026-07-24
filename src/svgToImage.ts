@@ -7,6 +7,13 @@ export interface RenderOptions {
   height?: number | null
   background: string | null
   quality: number
+  trim?: boolean
+}
+
+export interface RenderResult {
+  blob: Blob
+  width: number
+  height: number
 }
 
 interface Dimensions {
@@ -116,11 +123,42 @@ function svgToDataUrl(code: string): string {
   return `data:image/svg+xml;charset=utf-8,${encoded}`
 }
 
-export async function renderToBlob(code: string, options: RenderOptions): Promise<Blob> {
+interface ContentBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+function findContentBounds(ctx: CanvasRenderingContext2D, width: number, height: number): ContentBounds | null {
+  const { data } = ctx.getImageData(0, 0, width, height)
+  let top = -1
+  let bottom = -1
+  let left = width
+  let right = -1
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[(y * width + x) * 4 + 3]
+      if (alpha === 0) continue
+      if (top === -1) top = y
+      bottom = y
+      if (x < left) left = x
+      if (x > right) right = x
+    }
+  }
+
+  if (top === -1) return null
+
+  return { x: left, y: top, width: right - left + 1, height: bottom - top + 1 }
+}
+
+export async function renderToBlob(code: string, options: RenderOptions): Promise<RenderResult> {
   const svg = parseSvg(code)
 
   if (options.format === 'svg') {
-    return new Blob([code], { type: MIME.svg })
+    const { width, height } = intrinsicSize(svg)
+    return { blob: new Blob([code], { type: MIME.svg }), width, height }
   }
 
   const { width, height } = intrinsicSize(svg)
@@ -137,6 +175,7 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
     image.src = url
   })
 
+  // Render transparently first so trim (and any background fill) can be applied afterward.
   const canvas = document.createElement('canvas')
   canvas.width = targetWidth
   canvas.height = targetHeight
@@ -144,21 +183,50 @@ export async function renderToBlob(code: string, options: RenderOptions): Promis
   if (!ctx) {
     throw new Error('Canvas is not supported in this browser.')
   }
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight)
+
+  let content: CanvasImageSource = canvas
+  let outWidth = targetWidth
+  let outHeight = targetHeight
+
+  if (options.trim) {
+    const bounds = findContentBounds(ctx, targetWidth, targetHeight)
+    if (bounds) {
+      const trimmed = document.createElement('canvas')
+      trimmed.width = bounds.width
+      trimmed.height = bounds.height
+      const trimmedCtx = trimmed.getContext('2d')
+      if (!trimmedCtx) {
+        throw new Error('Canvas is not supported in this browser.')
+      }
+      trimmedCtx.drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height)
+      content = trimmed
+      outWidth = bounds.width
+      outHeight = bounds.height
+    }
+  }
+
+  const finalCanvas = document.createElement('canvas')
+  finalCanvas.width = outWidth
+  finalCanvas.height = outHeight
+  const finalCtx = finalCanvas.getContext('2d')
+  if (!finalCtx) {
+    throw new Error('Canvas is not supported in this browser.')
+  }
 
   // JPEG has no alpha channel, so a transparent SVG becomes black without a fill.
   const background = options.background ?? (options.format === 'jpeg' ? '#ffffff' : null)
   if (background) {
-    ctx.fillStyle = background
-    ctx.fillRect(0, 0, targetWidth, targetHeight)
+    finalCtx.fillStyle = background
+    finalCtx.fillRect(0, 0, outWidth, outHeight)
   }
-
-  ctx.drawImage(image, 0, 0, targetWidth, targetHeight)
+  finalCtx.drawImage(content, 0, 0)
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, MIME[options.format], options.quality),
+    finalCanvas.toBlob(resolve, MIME[options.format], options.quality),
   )
   if (!blob) {
     throw new Error('Failed to encode the image.')
   }
-  return blob
+  return { blob, width: outWidth, height: outHeight }
 }
