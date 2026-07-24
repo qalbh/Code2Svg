@@ -6,6 +6,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10.0',
+    date: '2026-07-24',
+    changes: [
+      'Format button — pretty-prints the SVG code with consistent indentation, without changing what it renders.',
+    ],
+  },
+  {
     version: '1.9.0',
     date: '2026-07-24',
     changes: [

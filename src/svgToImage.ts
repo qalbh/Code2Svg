@@ -116,6 +116,70 @@ export function getSvgDimensions(code: string): Dimensions {
   return intrinsicSize(parseSvg(code))
 }
 
+function escapeAttrValue(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function serializeAttrs(el: Element): string {
+  return Array.from(el.attributes)
+    .map((attr) => ` ${attr.name}="${escapeAttrValue(attr.value)}"`)
+    .join('')
+}
+
+function serializeStandalone(node: Element): string {
+  const serialized = new XMLSerializer().serializeToString(node)
+  const hadOwnXmlns = Array.from(node.attributes).some((attr) => attr.name === 'xmlns')
+  if (hadOwnXmlns) return serialized
+  // XMLSerializer adds a default-namespace declaration when a node is
+  // serialized outside its parent's context, even if it didn't have one in
+  // the original source — strip it back out so formatting stays whitespace-only.
+  return serialized.replace(/ xmlns="http:\/\/www\.w3\.org\/2000\/svg"(?=[\s/>])/, '')
+}
+
+function prettifyNode(node: Element, depth: number, indentUnit: string): string {
+  const indent = indentUnit.repeat(depth)
+  const tagName = node.tagName
+  const attrs = serializeAttrs(node)
+  const children = Array.from(node.childNodes)
+
+  const hasMeaningfulText = children.some(
+    (c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? '').trim() !== '',
+  )
+  if (hasMeaningfulText) {
+    // Whitespace inside text content is rendered, so leave text-bearing (and
+    // mixed-content) elements exactly as the browser serializes them rather
+    // than risk shifting visible text by re-indenting around it.
+    return `${indent}${serializeStandalone(node)}`
+  }
+
+  const structuralChildren = children.filter(
+    (c) => c.nodeType === Node.ELEMENT_NODE || c.nodeType === Node.COMMENT_NODE,
+  )
+  if (structuralChildren.length === 0) {
+    return `${indent}<${tagName}${attrs}/>`
+  }
+
+  const inner = structuralChildren
+    .map((child) =>
+      child.nodeType === Node.COMMENT_NODE
+        ? `${indentUnit.repeat(depth + 1)}<!--${(child as Comment).data}-->`
+        : prettifyNode(child as Element, depth + 1, indentUnit),
+    )
+    .join('\n')
+
+  return `${indent}<${tagName}${attrs}>\n${inner}\n${indent}</${tagName}>`
+}
+
+export function prettifySvg(code: string): string {
+  const declMatch = code.match(/^\s*(<\?xml[^?]*\?>)\s*/i)
+  const declaration = declMatch ? declMatch[1] : ''
+  const body = declMatch ? code.slice(declMatch[0].length) : code
+
+  const svg = parseSvg(body)
+  const formatted = prettifyNode(svg, 0, '  ')
+  return declaration ? `${declaration}\n${formatted}\n` : `${formatted}\n`
+}
+
 const COLOR_ATTR_PATTERN = /\b(?:fill|stroke|stop-color)\s*=\s*["']([^"']+)["']/gi
 const NON_COLOR_VALUES = new Set(['none', 'transparent', 'currentcolor'])
 

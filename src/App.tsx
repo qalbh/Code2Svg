@@ -9,6 +9,7 @@ import {
   findXmlError,
   getSvgDimensions,
   normalizeColorToHex,
+  prettifySvg,
   renderToBlob,
   replaceColor,
   type ImageFormat,
@@ -363,6 +364,19 @@ export default function App() {
     }
   }, [code])
 
+  const formatCode = useCallback(() => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    try {
+      setCode(prettifySvg(trimmed))
+      setStatus({ kind: 'info', text: 'Formatted the SVG code.' })
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not format the code.' })
+    }
+  }, [trimmed])
+
   const loadFile = useCallback((file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -494,6 +508,7 @@ export default function App() {
           <div className="pane-head">
             <span className="pane-title">SVG code</span>
             <div className="pane-tools">
+              <button className="ghost" onClick={formatCode}>Format</button>
               <button className="ghost" onClick={() => fileInputRef.current?.click()}>Upload</button>
               <button className="ghost" onClick={copyCode}>Copy</button>
               <input
