@@ -20,6 +20,9 @@ import {
 } from './svgToImage'
 import { toDataUri, toReact, toReactNative } from './svgToCode'
 import { hasAnimation, renderToGif } from './svgToGif'
+import { renderToPdf } from './svgToPdf'
+import { ICO_SIZES, renderToIco } from './svgToIco'
+import { buildFaviconPackage } from './faviconPackage'
 import { DEFAULT_OPTIMIZE_OPTIONS, PLUGIN_GROUPS, optimizeSvg, type OptimizeOptions } from './optimizeSvg'
 import { INFO_PAGES, type InfoPage } from './infoPages'
 
@@ -42,6 +45,8 @@ const FORMATS: { id: ImageFormat; label: string }[] = [
   { id: 'jpeg', label: 'JPG' },
   { id: 'webp', label: 'WebP' },
   { id: 'svg', label: 'SVG' },
+  { id: 'pdf', label: 'PDF' },
+  { id: 'ico', label: 'ICO' },
 ]
 
 const SCALES = [0.5, 1, 2, 3, 4]
@@ -197,10 +202,12 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
   const [optimizeOptions, setOptimizeOptions] = useState<OptimizeOptions>(getInitialOptimizeOptions)
   const [showOptimizeSettings, setShowOptimizeSettings] = useState(false)
   const [optimizeResult, setOptimizeResult] = useState<{ originalBytes: number; optimizedBytes: number } | null>(null)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [codeCopied, flashCodeCopied] = useFlash()
   const [outputCopied, flashOutputCopied] = useFlash()
   const [downloaded, flashDownloaded] = useFlash()
   const [imageCopied, flashImageCopied] = useFlash()
+  const [faviconDone, flashFaviconDone] = useFlash()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
@@ -427,6 +434,21 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
   }, [previewUrl, preview.pan])
 
   const supportsQuality = format === 'jpeg' || format === 'webp'
+  // Raster formats go through the canvas encoder; PDF (vector) and ICO
+  // (fixed-size favicon) are assembled by their own modules and don't expose the
+  // size / quality / background / trim controls.
+  const isRaster = format === 'png' || format === 'jpeg' || format === 'webp'
+
+  const triggerDownload = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }, [])
 
   const download = useCallback(async () => {
     if (!trimmed) {
@@ -436,6 +458,20 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
     setBusy(true)
     setStatus(null)
     try {
+      if (format === 'pdf') {
+        const blob = await renderToPdf(trimmed)
+        triggerDownload(blob, 'code2svg.pdf')
+        setStatus({ kind: 'info', text: `Downloaded a vector PDF (${formatFileSize(blob.size)}).` })
+        flashDownloaded()
+        return
+      }
+      if (format === 'ico') {
+        const blob = await renderToIco(trimmed)
+        triggerDownload(blob, 'favicon.ico')
+        setStatus({ kind: 'info', text: `Downloaded an ICO (${ICO_SIZES.join(' / ')} px).` })
+        flashDownloaded()
+        return
+      }
       const { blob, width, height } = await renderToBlob(trimmed, {
         format,
         scale,
@@ -443,23 +479,16 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
         height: sizeMode === 'custom' ? customHeight : null,
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
-        trim: format !== 'svg' && trimTransparent,
+        trim: isRaster && trimTransparent,
         rotation,
         flipH,
         flipV,
       })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
       // @2x/@3x-style suffix so scaled exports drop straight into design-tool
       // asset pipelines. Only meaningful for scale-based (not custom-pixel) sizing.
-      const scaleSuffix = format !== 'svg' && sizeMode === 'scale' && scale !== 1 ? `@${scale}x` : ''
-      link.download = `code2svg${scaleSuffix}.${fileExtension(format)}`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-      const sizeNote = format !== 'svg' && trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
+      const scaleSuffix = isRaster && sizeMode === 'scale' && scale !== 1 ? `@${scale}x` : ''
+      triggerDownload(blob, `code2svg${scaleSuffix}.${fileExtension(format)}`)
+      const sizeNote = isRaster && trimTransparent ? ` (${width} × ${height}, trimmed)` : ''
       setStatus({ kind: 'info', text: `Downloaded as ${fileExtension(format).toUpperCase()}${sizeNote}.` })
       flashDownloaded()
     } catch (err) {
@@ -467,7 +496,26 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
     } finally {
       setBusy(false)
     }
-  }, [trimmed, format, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV, flashDownloaded])
+  }, [trimmed, format, isRaster, scale, sizeMode, customWidth, customHeight, quality, useBackground, background, trimTransparent, rotation, flipH, flipV, triggerDownload, flashDownloaded])
+
+  const downloadFaviconPackage = useCallback(async () => {
+    if (!trimmed) {
+      setStatus({ kind: 'error', text: 'Add some SVG code first.' })
+      return
+    }
+    setBusy(true)
+    setStatus(null)
+    try {
+      const blob = await buildFaviconPackage(trimmed)
+      triggerDownload(blob, 'favicon-package.zip')
+      setStatus({ kind: 'info', text: `Downloaded the favicon package (${formatFileSize(blob.size)}).` })
+      flashFaviconDone()
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'Could not build the favicon package.' })
+    } finally {
+      setBusy(false)
+    }
+  }, [trimmed, triggerDownload, flashFaviconDone])
 
   const downloadGif = useCallback(async () => {
     if (!trimmed) {
@@ -505,7 +553,9 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null)
 
   useEffect(() => {
-    if (!trimmed) {
+    // PDF/ICO aren't canvas-encoded (and PDF would pull in jspdf on every
+    // keystroke), so skip the live estimate for them.
+    if (!trimmed || format === 'pdf' || format === 'ico') {
       setEstimatedSize(null)
       return
     }
@@ -518,7 +568,7 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
         height: sizeMode === 'custom' ? customHeight : null,
         quality,
         background: format === 'svg' ? null : useBackground ? background : null,
-        trim: format !== 'svg' && trimTransparent,
+        trim: isRaster && trimTransparent,
         rotation,
         flipH,
         flipV,
@@ -724,15 +774,17 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
     const [a, b] = swapDims ? [h, w] : [w, h]
     return `${Math.round(a)} × ${Math.round(b)}${unit}`
   }
-  const outputSize = dimensions
-    ? format === 'svg'
-      ? fmtSize(dimensions.width, dimensions.height, '')
-      : trimTransparent
-        ? 'Trimmed to content'
-        : sizeMode === 'custom'
-          ? fmtSize(customWidth, customHeight, ' px')
-          : fmtSize(dimensions.width * scale, dimensions.height * scale, ' px')
-    : '—'
+  const outputSize = format === 'ico'
+    ? `${ICO_SIZES.join(' / ')} px`
+    : dimensions
+      ? format === 'svg' || format === 'pdf'
+        ? fmtSize(dimensions.width, dimensions.height, format === 'pdf' ? ' pt' : '')
+        : trimTransparent
+          ? 'Trimmed to content'
+          : sizeMode === 'custom'
+            ? fmtSize(customWidth, customHeight, ' px')
+            : fmtSize(dimensions.width * scale, dimensions.height * scale, ' px')
+      : '—'
 
   return (
     <div
@@ -1084,11 +1136,78 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
         <aside className="pane controls-pane">
           <div className="pane-head">
             <span className="pane-title pink"><span className="dot" />Export</span>
+            {isRaster && (
+              <div className="optimize-group">
+                <button
+                  className={showAdvanced ? 'icon-btn active' : 'icon-btn'}
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  title="Advanced options"
+                >
+                  <Icon name="settings" />
+                  Advanced
+                </button>
+                {showAdvanced && (
+                  <>
+                    <div className="popover-backdrop" onClick={() => setShowAdvanced(false)} />
+                    <div className="optimize-popover advanced-popover">
+                      {supportsQuality && (
+                        <div className="field">
+                          <label>Quality <span className="muted">{Math.round(quality * 100)}%</span></label>
+                          <input
+                            type="range"
+                            min={0.1}
+                            max={1}
+                            step={0.01}
+                            value={quality}
+                            onChange={(e) => setQuality(Number(e.target.value))}
+                          />
+                        </div>
+                      )}
+                      <div className="field">
+                        <CheckRow checked={useBackground} onChange={setUseBackground} label="Background color" />
+                        {useBackground && (
+                          <>
+                            <div className="bg-swatches">
+                              {BG_PRESETS.map((hex) => (
+                                <button
+                                  key={hex}
+                                  type="button"
+                                  className={background === hex ? 'bg-swatch active' : 'bg-swatch'}
+                                  style={{ background: hex }}
+                                  title={hex}
+                                  onClick={() => setBackground(hex)}
+                                />
+                              ))}
+                            </div>
+                            <div className="color-row">
+                              <input
+                                type="color"
+                                value={background}
+                                onChange={(e) => setBackground(e.target.value)}
+                              />
+                              <input
+                                type="text"
+                                value={background}
+                                onChange={(e) => setBackground(e.target.value)}
+                                spellCheck={false}
+                              />
+                            </div>
+                          </>
+                        )}
+                        {format === 'jpeg' && !useBackground && (
+                          <p className="hint">JPG has no transparency — a white background is applied.</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="controls">
             <div className="field">
               <label>Format</label>
-              <div className="seg wide">
+              <div className="seg wide seg-wrap">
                 {FORMATS.map((f) => (
                   <button
                     key={f.id}
@@ -1101,7 +1220,7 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
               </div>
             </div>
 
-            {format !== 'svg' && (
+            {isRaster && (
               <div className="field">
                 <label>Size</label>
                 <div className="seg wide">
@@ -1170,62 +1289,22 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
               </div>
             )}
 
-            {format !== 'svg' && (
+            {isRaster && (
               <div className="field">
                 <CheckRow checked={trimTransparent} onChange={setTrimTransparent} label="Auto-crop to content" />
                 <p className="hint">Crops the export to the visible artwork, removing transparent or solid-color padding.</p>
               </div>
             )}
 
-            {supportsQuality && (
+            {format === 'pdf' && (
               <div className="field">
-                <label>Quality <span className="muted">{Math.round(quality * 100)}%</span></label>
-                <input
-                  type="range"
-                  min={0.1}
-                  max={1}
-                  step={0.01}
-                  value={quality}
-                  onChange={(e) => setQuality(Number(e.target.value))}
-                />
+                <p className="hint">Exports a true vector PDF sized to the SVG ({outputSize}). Text and shapes stay crisp at any zoom.</p>
               </div>
             )}
 
-            {format !== 'svg' && (
+            {format === 'ico' && (
               <div className="field">
-                <CheckRow checked={useBackground} onChange={setUseBackground} label="Background color" />
-                {useBackground && (
-                  <>
-                    <div className="bg-swatches">
-                      {BG_PRESETS.map((hex) => (
-                        <button
-                          key={hex}
-                          type="button"
-                          className={background === hex ? 'bg-swatch active' : 'bg-swatch'}
-                          style={{ background: hex }}
-                          title={hex}
-                          onClick={() => setBackground(hex)}
-                        />
-                      ))}
-                    </div>
-                    <div className="color-row">
-                      <input
-                        type="color"
-                        value={background}
-                        onChange={(e) => setBackground(e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        value={background}
-                        onChange={(e) => setBackground(e.target.value)}
-                        spellCheck={false}
-                      />
-                    </div>
-                  </>
-                )}
-                {format === 'jpeg' && !useBackground && (
-                  <p className="hint">JPG has no transparency — a white background is applied.</p>
-                )}
+                <p className="hint">Renders a multi-size favicon ({ICO_SIZES.join(' / ')} px) packed into a single <code>.ico</code> file.</p>
               </div>
             )}
 
@@ -1245,6 +1324,13 @@ export default function App({ defaultFormat = 'png' }: { defaultFormat?: ImageFo
               <Icon name={downloaded ? 'check' : 'download'} />
               {busy ? 'Rendering…' : downloaded ? 'Downloaded' : `Download ${fileExtension(format).toUpperCase()}`}
             </button>
+
+            {format === 'ico' && (
+              <button className="ghost wide" onClick={downloadFaviconPackage} disabled={busy || !trimmed}>
+                <Icon name={faviconDone ? 'check' : 'download'} color={faviconDone ? 'var(--info)' : undefined} />
+                {faviconDone ? 'Downloaded' : 'Favicon package (.zip)'}
+              </button>
+            )}
 
             <button className="ghost wide" onClick={copyImage} disabled={busy || !trimmed}>
               <Icon name={imageCopied ? 'check' : 'image'} color={imageCopied ? 'var(--info)' : undefined} />

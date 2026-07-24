@@ -1,4 +1,4 @@
-export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'svg'
+export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'svg' | 'pdf' | 'ico'
 
 export type Rotation = 0 | 90 | 180 | 270
 
@@ -31,6 +31,8 @@ const MIME: Record<ImageFormat, string> = {
   jpeg: 'image/jpeg',
   webp: 'image/webp',
   svg: 'image/svg+xml',
+  pdf: 'application/pdf',
+  ico: 'image/x-icon',
 }
 
 export function fileExtension(format: ImageFormat): string {
@@ -320,6 +322,12 @@ function buildTransformedSvg(code: string, width: number, height: number, option
 }
 
 export async function renderToBlob(code: string, options: RenderOptions): Promise<RenderResult> {
+  // PDF and ICO are assembled by dedicated modules (svgToPdf / svgToIco), not the
+  // canvas encoder — guard so a stray call can't produce a mislabeled blob.
+  if (options.format === 'pdf' || options.format === 'ico') {
+    throw new Error('Use renderToPdf or renderToIco to export this format.')
+  }
+
   const svg = parseSvg(code)
 
   if (options.format === 'svg') {

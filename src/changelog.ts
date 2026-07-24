@@ -6,6 +6,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.24.0',
+    date: '2026-07-24',
+    changes: [
+      'New export formats — export your SVG as a true vector PDF or a multi-size .ico favicon, alongside the existing PNG/JPG/WebP/SVG/GIF.',
+      'Favicon package — download a complete favicon set as a ZIP (favicon.ico, PNG icons, Apple touch icon, source SVG, web manifest, and a ready-to-paste HTML snippet).',
+      'Tidied the Export panel with an Advanced (⚙) popover for quality and background.',
+      'Added dedicated converter pages: SVG to PDF, SVG to ICO, a Favicon Generator, and JPG to SVG.',
+    ],
+  },
+  {
     version: '1.23.0',
     date: '2026-07-24',
     changes: [

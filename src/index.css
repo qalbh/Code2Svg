@@ -1022,6 +1022,13 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 }
 
+/* Format switcher has six options — lay them out in a tidy 3×2 grid instead of
+   one cramped row. */
+.seg.wide.seg-wrap {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
 .seg-btn {
   display: flex;
   align-items: center;

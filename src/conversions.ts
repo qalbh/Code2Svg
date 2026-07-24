@@ -196,4 +196,167 @@ export const CONVERSIONS: Conversion[] = [
       },
     ],
   },
+  {
+    slug: 'svg-to-pdf',
+    tool: 'svgToImage',
+    defaultFormat: 'pdf',
+    label: 'SVG to PDF',
+    title: 'SVG to PDF Converter — Convert SVG to PDF Online Free | Code2Svg',
+    description:
+      'Convert SVG to PDF online for free. Paste SVG code or upload a file and export a true vector PDF, sized to your artwork and crisp at any zoom — all in your browser, nothing uploaded.',
+    h1: 'SVG to PDF Converter',
+    intro: [
+      'Convert SVG to a true vector PDF right in your browser. Paste your SVG or upload a file and Code2Svg writes a real vector PDF — not a screenshot — so every path and piece of text stays razor-sharp at any zoom or print size.',
+      'The PDF page is sized to your SVG\'s own dimensions, making it perfect for print-ready logos, diagrams, and icons you need to drop into a document or send to a printer. Everything is generated locally; your artwork is never uploaded.',
+    ],
+    howto: [
+      'Paste your SVG code into the editor, or upload / drag in an .svg file.',
+      'Set the export format to PDF.',
+      'Click Download PDF — you get a vector PDF sized to your artwork.',
+    ],
+    faq: [
+      {
+        q: 'How do I convert an SVG to PDF?',
+        a: 'Paste your SVG or upload an .svg file, set the format to PDF, and click Download PDF. The vector PDF is generated in your browser.',
+      },
+      {
+        q: 'Is the PDF a real vector, or just an image?',
+        a: 'It is a true vector PDF — the SVG paths and text are drawn as vectors, so the result stays sharp at any zoom level and prints cleanly.',
+      },
+      {
+        q: 'What size is the PDF page?',
+        a: 'The page is sized to your SVG\'s own width and height (in points), so the artwork fills the page without extra margins.',
+      },
+      {
+        q: 'Is my SVG uploaded to a server?',
+        a: 'No. The PDF is built entirely in your browser — your SVG never leaves your device.',
+      },
+      {
+        q: 'Is the SVG to PDF converter free?',
+        a: 'Yes, completely free with no account and no watermark.',
+      },
+    ],
+  },
+  {
+    slug: 'svg-to-ico',
+    tool: 'svgToImage',
+    defaultFormat: 'ico',
+    label: 'SVG to ICO',
+    title: 'SVG to ICO Converter — Convert SVG to ICO Favicon Online | Code2Svg',
+    description:
+      'Convert SVG to ICO online for free. Turn an SVG into a multi-size .ico favicon (16, 32, and 48 px) in your browser, or grab the full favicon package. Nothing is uploaded.',
+    h1: 'SVG to ICO Converter',
+    intro: [
+      'Convert SVG to a real .ico favicon in your browser. Code2Svg renders your SVG to the classic favicon sizes — 16, 32, and 48 px — and packs them into a single multi-resolution .ico file that browsers pick the right size from automatically.',
+      'Need more than the .ico? Grab the full favicon package as a ZIP: the .ico, PNG icons, an Apple touch icon, the source SVG, a web app manifest, and an HTML snippet to paste into your <head>. Everything is generated locally.',
+    ],
+    howto: [
+      'Paste your SVG code into the editor, or upload / drag in an .svg file.',
+      'Set the export format to ICO.',
+      'Click Download ICO for the favicon, or Favicon package (.zip) for the complete set.',
+    ],
+    faq: [
+      {
+        q: 'How do I convert an SVG to ICO?',
+        a: 'Paste your SVG or upload an .svg file, set the format to ICO, and click Download ICO. The multi-size .ico is generated in your browser.',
+      },
+      {
+        q: 'What sizes are inside the .ico file?',
+        a: 'The .ico packs 16, 32, and 48 px versions, so browsers and Windows can pick the right resolution for the tab, taskbar, or shortcut.',
+      },
+      {
+        q: 'Can I get a full favicon set, not just the .ico?',
+        a: 'Yes. The Favicon package (.zip) button also gives you PNG icons, an Apple touch icon, the source SVG, a web app manifest, and a ready-to-paste HTML snippet.',
+      },
+      {
+        q: 'Is my SVG uploaded to a server?',
+        a: 'No. The .ico is assembled entirely in your browser — your SVG never leaves your device.',
+      },
+      {
+        q: 'Is the SVG to ICO converter free?',
+        a: 'Yes, free with no account and no watermark.',
+      },
+    ],
+  },
+  {
+    slug: 'svg-to-favicon',
+    tool: 'svgToImage',
+    defaultFormat: 'ico',
+    label: 'Favicon Generator',
+    title: 'Favicon Generator — Create a Favicon from SVG Online Free | Code2Svg',
+    description:
+      'Free online favicon generator. Turn an SVG into a complete favicon package — .ico, PNG icons, Apple touch icon, web manifest, and an HTML snippet — right in your browser. Nothing is uploaded.',
+    h1: 'Favicon Generator',
+    intro: [
+      'Generate a complete favicon set from an SVG, free and in your browser. Paste or upload your SVG and Code2Svg produces everything a modern site needs: a multi-size favicon.ico, 16/32 px PNGs, a 180 px Apple touch icon, 192/512 px app icons, the crisp source SVG, a site.webmanifest, and an HTML snippet to paste into your <head>.',
+      'It all downloads as a single ZIP, ready to drop into your site root. Because the icons are rendered locally, your artwork is never uploaded to a server.',
+    ],
+    howto: [
+      'Paste your SVG code into the editor, or upload / drag in an .svg file.',
+      'Leave the format on ICO (the favicon format).',
+      'Click Favicon package (.zip) to download the complete set, then add the included HTML snippet to your <head>.',
+    ],
+    faq: [
+      {
+        q: 'What is in the favicon package?',
+        a: 'A multi-size favicon.ico, 16/32 px PNG icons, a 180 px Apple touch icon, 192/512 px app icons, the source SVG, a site.webmanifest, and an HTML snippet with the <link> tags — all in one ZIP.',
+      },
+      {
+        q: 'How do I add the favicon to my site?',
+        a: 'Unzip the files into your site root and paste the included head-snippet.html tags into your page\'s <head>. Browsers will pick the right icon automatically.',
+      },
+      {
+        q: 'Do I need a specific image to start?',
+        a: 'Any SVG works, but a simple, bold square design reads best at tiny favicon sizes. Logos and icons work far better than detailed artwork.',
+      },
+      {
+        q: 'Is my image uploaded anywhere?',
+        a: 'No. Every icon is rendered in your browser and zipped locally — nothing is uploaded to a server.',
+      },
+      {
+        q: 'Is the favicon generator free?',
+        a: 'Yes, completely free with no account and no watermark.',
+      },
+    ],
+  },
+  {
+    slug: 'jpg-to-svg',
+    tool: 'imageToSvg',
+    label: 'JPG to SVG',
+    title: 'JPG to SVG Converter — Vectorize JPG Online Free | Code2Svg',
+    description:
+      'Convert JPG to SVG online for free. Upload or drag a JPG and trace it to a scalable vector SVG in your browser, with adjustable colors, detail, and smoothing. Best for logos and flat graphics.',
+    h1: 'JPG to SVG Converter',
+    intro: [
+      'Convert a JPG into a scalable SVG right in your browser. Upload or drag in a JPG and Code2Svg traces it into clean vector paths with imagetracerjs — no uploads and no sign-up. Adjust the number of colors, detail, and smoothing and watch the trace update live.',
+      'Tracing works best for logos, icons, and flat or simple graphics — not detailed photographs, which don\'t vectorize well. When the preview looks right, copy the SVG code or download the .svg file.',
+    ],
+    howto: [
+      'Upload or drag a JPG (or PNG) onto the page.',
+      'Adjust the Number of colors, Detail, and Smoothing sliders until the live trace looks right.',
+      'Copy the generated SVG code or click Download SVG.',
+    ],
+    faq: [
+      {
+        q: 'How do I convert a JPG to SVG?',
+        a: 'Upload or drag a JPG onto the page, adjust the colors, detail, and smoothing sliders, and copy or download the traced SVG. The tracing runs entirely in your browser.',
+      },
+      {
+        q: 'What kind of JPG converts best to SVG?',
+        a: 'Logos, icons, and flat graphics with solid color areas trace cleanly. Photographs and images with gradients or fine detail do not vectorize well — a raster format is better for those.',
+      },
+      {
+        q: 'Can I adjust the traced result?',
+        a: 'Yes. The Number of colors, Detail, and Smoothing sliders control how faithfully and how smoothly the image is traced, and the preview updates live.',
+      },
+      {
+        q: 'Does converting JPG to SVG make the image editable?',
+        a: 'The trace produces real vector paths you can scale without losing quality and edit in any vector editor, though a traced result will not perfectly match a hand-drawn original.',
+      },
+      {
+        q: 'Is the JPG to SVG converter free and private?',
+        a: 'Yes. It is free with no watermark, and your image is traced locally in your browser — nothing is uploaded to a server.',
+      },
+    ],
+  },
 ]
